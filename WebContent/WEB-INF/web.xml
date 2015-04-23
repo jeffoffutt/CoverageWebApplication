@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app id="WebApp_ID" version="2.4" xmlns="http://java.sun.com/xml/ns/j2ee" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd">
+	<display-name>
+	CoverageWebApplication</display-name>
+	<welcome-file-list>
+		<welcome-file>index.html</welcome-file>
+		<welcome-file>index.htm</welcome-file>
+		<welcome-file>index.jsp</welcome-file>
+		<welcome-file>default.html</welcome-file>
+		<welcome-file>default.htm</welcome-file>
+		<welcome-file>default.jsp</welcome-file>
+	</welcome-file-list>
+	 <!--  servlet mappings start -->
+
+    <servlet>
+        <servlet-name>coverage.web.GraphCoverage</servlet-name>
+        <servlet-class>coverage.web.GraphCoverage</servlet-class>
+    </servlet>
+
+    <servlet-mapping>
+        <servlet-name>coverage.web.GraphCoverage</servlet-name>
+        <url-pattern>/coverage/GraphCoverage</url-pattern>
+    </servlet-mapping>
+    
+  <servlet>
+        <servlet-name>coverage.web.LogicCoverage</servlet-name>
+        <servlet-class>coverage.web.LogicCoverage</servlet-class>
+    </servlet>
+
+    <servlet-mapping>
+        <servlet-name>coverage.web.LogicCoverage</servlet-name>
+        <url-pattern>/coverage/LogicCoverage</url-pattern>
+    </servlet-mapping>
+    
+    <servlet>
+        <servlet-name>coverage.web.DFGraphCoverage</servlet-name>
+        <servlet-class>coverage.web.DFGraphCoverage</servlet-class>
+    </servlet>
+
+    <servlet-mapping>
+        <servlet-name>coverage.web.DFGraphCoverage</servlet-name>
+        <url-pattern>/coverage/DFGraphCoverage</url-pattern>
+    </servlet-mapping>
+
+	<servlet>
+        <servlet-name>coverage.web.DFGraphCoverage1</servlet-name>
+        <servlet-class>coverage.web.DFGraphCoverage1</servlet-class>
+    </servlet>
+
+    <servlet-mapping>
+        <servlet-name>coverage.web.DFGraphCoverage1</servlet-name>
+        <url-pattern>/coverage/DFGraphCoverage1</url-pattern>
+    </servlet-mapping>
+    
+    <servlet>
+        <servlet-name>coverage.web.MinimalMUMCUTCoverage</servlet-name>
+        <servlet-class>coverage.web.MinimalMUMCUTCoverage</servlet-class>
+    </servlet>
+
+    <servlet-mapping>
+        <servlet-name>coverage.web.MinimalMUMCUTCoverage</servlet-name>
+        <url-pattern>/coverage/MinimalMUMCUTCoverage</url-pattern>
+    </servlet-mapping>
+    
+    <!-- servlet mapping end -->
+</web-app>

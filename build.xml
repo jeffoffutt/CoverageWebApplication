@@ -1,0 +1,189 @@
+<?xml version="1.0" ?>
+<!--  ======================================================================= -->
+<!--  coverage build file                                                     -->
+<!--  ======================================================================= -->
+<project name="coverage" basedir=".">
+    <property name="name" value="coverage" />
+    <property name="version" value="1.0" />
+
+    <property name="debug" value="on" />
+    <property name="deprecation" value="off" />
+    <property name="optimize" value="off" />
+
+	<property name="web.dir" value="webcontent"/>
+    <property name="src.dir" value="src" />
+   	<property name="dist.dir" value="dist"/>
+	<property name="baseofdist.dir" value="coverage"/>
+	<property name="archive.dir" value="${name}_${version}"/>
+	
+	<property name="applet.file" value="GraphApplet.java"/>
+	<property name="applet.dest.dir" value="${web.dir}/coverage"/>
+	<property name="applet.lib.dir" value="${applet.dest.dir}/lib"/>
+	<property name="docs.dir" value="docs"/>
+	
+	<property name="docs.api.dir" value="${docs.dir}/api"/>
+	<property name="webinf.dir" value="${web.dir}/WEB-INF"/>
+	<property name="build.dir" value="${webinf.dir}/classes"/>
+    <property name="lib.dir" value="${webinf.dir}/lib" />
+	
+	<property name="author.name" value="Wuzhi Xu"/>
+	<property name="vendor.name" value="George Mason University"/>
+
+    <property name="packages" value="coverage.graph, coverage.logic, coverage.web" />
+
+<!-- =================================================================== -->
+<!-- Defines the classpath used for compilation and test.                -->
+<!-- =================================================================== -->
+<path id="lib.classpath">
+    <fileset dir="${lib.dir}">
+        <include name="*.jar"/>
+    </fileset>
+</path>
+
+<path id="applet.classpath">
+	<fileset dir="${applet.lib.dir}">
+		<include name="*.jar"/>
+	</fileset>
+</path>
+
+<target name="init">
+  <tstamp>
+    <format property="TODAY" pattern="dd_MM_yyyy" locale="en,US"/>
+  </tstamp>
+</target>
+<!--  ===================================================================  -->
+<!--  Compile the source code                                             -->
+<!--  ===================================================================  -->
+<target name="compile" depends="init">
+    <mkdir dir="${build.dir}"/>
+	<echo> Compiling coverage source in ${src.dir} into ${build.dir} </echo>
+    <javac srcdir="${src.dir}" destdir="${build.dir}"
+           debug="${debug}" deprecation="${deprecation}" optimize="${optimize}"
+        classpathref="lib.classpath" >
+    	<include name="**/*.java"/>
+    </javac>
+</target>
+
+<!--  ===================================================================  -->
+<!--  Creates the jar archive                                              -->
+<!--  ===================================================================  -->
+<target name="jar" depends="init">
+    <mkdir dir="${dist.dir}" />
+	<mkdir dir="${docs.dir}"/>
+	<manifest file="${docs.dir}/MANIFEST.MF">
+	    <attribute name="Built-By" value="${author.name}"/>
+	    <section name="${name}">
+	      <attribute name="Specification-Title" value="${name}"/>
+	      <attribute name="Specification-Version" value="${version}"/>
+	      <attribute name="Specification-Vendor" value="${vendor.name}"/>
+	      <attribute name="Implementation-Title" value="${name}"/>
+	      <attribute name="Implementation-Version" value="${version} ${TODAY}"/> 
+	      <attribute name="Implementation-Vendor" value="${vendor.name}"/>
+	    </section>
+	</manifest>
+
+    <echo>Generating binary coverage jar file graph.jar in ${dist.dir}...</echo>
+    <jar jarfile="${dist.dir}/graph.jar" manifest="${docs.dir}/MANIFEST.MF">
+        <fileset dir="${build.dir}">
+        	<include name="**/*.class"/>
+        	<exclude name="**/Test*.class"/>        		
+        </fileset>
+    </jar>
+
+	<echo>Deleting the old coverage jar file in ${applet.lib.dir}</echo>
+	<delete includeemptydirs="false">
+	  <fileset dir="${applet.lib.dir}" includes="graph.jar"/>
+	</delete>
+	<copy file="${dist.dir}/graph.jar" todir="${applet.lib.dir}"/>
+</target>
+
+	<!--  ===================================================================  -->
+	<!--  archive the whole project using tar                                  -->
+	<!--  ===================================================================  -->
+	<target name="tar" depends="init">
+		<delete file="${dist.dir}/coverage.tar"/>
+		<tar destfile="${dist.dir}/coverage.tar"
+		      basedir="${src.dir}"
+		      excludes="/work/**"
+		/>
+	</target>
+	
+<!--  ===================================================================  -->
+<!--  Creates the API documentation                                        -->
+<!--  ===================================================================  -->
+<target name="javadoc">
+    <mkdir dir="${docs.api.dir}" />
+	<echo>Creating the API documentation for coverage application at ${docs.api.dir}</echo>
+    <javadoc packagenames="${packages}" sourcepath="${src.dir}"
+             destdir="${docs.api.dir}" author="true" version="true"
+             windowtitle="${Name} ${version} API" doctitle="${Name}"
+             footer="Copyright &amp;copy; 2004-2008 George Mason University. See &lt;a target=&quot;_top&quot; href=&quot;../license.html&quot;&gt;license agreement&lt;/A&gt; for rights granted."> 
+    </javadoc>
+</target>
+	
+	<!--  ===================================================================  -->
+	<!--  build the application                                                -->
+	<!--  ===================================================================  -->
+	<target name="build" depends="compile, javadoc, jar, tar" description="build the application"/>
+
+	<!--  ===================================================================  -->
+	<!--  Deploy web application on the tomcat server                          -->
+	<!--  ===================================================================  -->
+
+    <target name="deploy" depends="init" description="deploy it on the tomcat">
+  		<input
+  			message="Please enter the directory to deploy:"
+  			addproperty="install.dir"/>
+
+    	<fail message="Can not find the directory: ${install.dir}">
+    		<condition>
+    			<not><available file="${install.dir}" type="dir"/>    			
+    			</not>
+    		</condition>
+    	</fail>
+    	
+    	<input message="Do you want to overwrite ${install.dir}/web.xml? (y/n)" addproperty="isoverwrite"/>
+    	
+    	<condition property="overwrite">
+    		<equals arg1="y" arg2="${isoverwrite}"/>
+    	</condition>
+    	
+    	<antcall target="echo.msg"/>
+    	
+    	<echo> Deploying coverage application at ${install.dir}</echo>
+    	<mkdir dir="${install.dir}/coverage"/>
+    	<mkdir dir="${install.dir}/coverage/lib"/>
+    	<mkdir dir="${install.dir}/WEB-INF"/>
+    	<mkdir dir="${install.dir}/WEB-INF/lib"/>
+    	
+    	<copy todir="${install.dir}/coverage">
+    		 <fileset dir="${applet.dest.dir}">
+    		      <include name="**/*"/>
+    		 </fileset>
+    	</copy>
+    	
+    	<copy todir="${install.dir}/WEB-INF/lib">
+    		 <fileset dir="${lib.dir}">
+    		      <include name="*.jar"/>
+				  <exclude name="servlet.jar"/>
+    		 </fileset>
+    	</copy>
+    	
+    	<copy file="${dist.dir}/graph.jar" todir="${install.dir}/WEB-INF/lib"/>
+    	
+    	<echo>Overwriting the old ${install.dir}/WEB-INF/web.xml</echo>
+    	<antcall target="copy.webxml"/>
+    	 
+    </target>
+	
+	<target name="copy.webxml" if="overwrite">
+		<echo>Overwriting the old web.xml ...</echo>
+		<copy file="${webinf.dir}/web.xml" todir="${install.dir}/WEB-INF"/>
+	</target>
+	
+	<target name="echo.msg" unless="overwrite">
+		<echo>You choose not to overwrite the ${install.dir}/WEB-INF/web.xml. You need to modify the old web.xml manually. 
+		You need to copy the servlet mapping in the ${webinf.dir}/web.xml to the your web.xml.</echo>
+	</target>
+	
+</project>

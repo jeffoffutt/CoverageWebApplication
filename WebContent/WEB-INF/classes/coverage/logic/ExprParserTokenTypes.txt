@@ -1,0 +1,13 @@
+// $ANTLR 2.7.6 (2005-12-22): expr.g -> ExprParserTokenTypes.txt$
+ExprParser    // output token vocab name
+SEM=4
+EQUAL=5
+EOR=6
+IMPL=7
+OR=8
+AND=9
+NOT=10
+ID=11
+LPAREN=12
+RPAREN=13
+WS=14
