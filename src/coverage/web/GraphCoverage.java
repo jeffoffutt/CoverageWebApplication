@@ -1432,11 +1432,11 @@ public class GraphCoverage extends HttpServlet {
 			nodeStr += "var node"+ node +" = graph.newNode({label: '"+node;
 			if(g.isInitialNode(node))  // initial to be brown
 			{
-				nodeStr +="', color: '#996600'});\n";
+				nodeStr +="', color: '#FFCC00', font: 'italic bolder 16px Verdana, sans-serif'});\n";
 			}
 			else if(g.isEndingNode(node))  // end to be blue
 			{
-				nodeStr +="', color: '#08298A'});\n";
+				nodeStr +="', color: '#CC00FF', font: 'italic bolder 16px Verdana, sans-serif'});\n";
 			}
 			else // normal node t obe black
 			{
@@ -1482,7 +1482,7 @@ public class GraphCoverage extends HttpServlet {
 				
 				result += "<div>\n"; 
 				result += "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"
-						+ "Node color: <font color=\"#996600\">Initial Node</font>, <font color=\"#08298A\">Final Node</font><br>\n";
+						+ "Node color: <font color=\"#FFCC00\">Initial Node</font>, <font color=\"#CC00FF\">Final Node</font><br>\n";
 				result += "<canvas id=\"springydemo\" width=\"500\" height=\"400\" />\n";
 				result += "</div>\n"
 						+"</td></tr>\n";
