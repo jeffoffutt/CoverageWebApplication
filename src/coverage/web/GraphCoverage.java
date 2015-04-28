@@ -5,6 +5,7 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
@@ -710,6 +711,7 @@ public class GraphCoverage extends HttpServlet {
 		initialNode = request.getParameter("initialNode");
 		edges = request.getParameter("edges");
 		endNode = request.getParameter("endNode");
+		
 		g = GraphUtil.readGraph(edges, initialNode, endNode);
 	}
 	

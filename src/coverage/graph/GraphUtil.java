@@ -31,7 +31,10 @@ public class GraphUtil {
 	private static final String edgePat = "([a-zA-Z]|[0-9])+(,|\\x20)([a-zA-Z]|[0-9])+";
 	private static final String defusePat = "([a-zA-Z]|[0-9])+((,|(\\x20)+)([a-zA-Z]|[0-9])+)+";
 	private static final String infeasibleSubpathsPat = "[0-9]+(,(\\x20)*[0-9]+(\\x20)*)*(;(\\x20)*[0-9]+(,(\\x20)*[0-9]+(\\x20)*)*)*";
-	
+	// Lin added it for checking node input
+	// For example: 1 or 1 2 or 1 2 3 or a 1 2 ...
+	// empty is allowed
+	private static final String nodePat = "([a-zA-Z]|[0-9])*((,|(\\x20)+)([a-zA-Z]|[0-9])+)*";
 	/**
 	 * *TODO: return a standard string to meet the requirement of imported java applet
 	 * 
@@ -356,10 +359,19 @@ public class GraphUtil {
 	 */
 	public static Graph readGraph(String edges, String initialNode, String endNodes) throws InvalidInputException
 	{
+		// remove empty lines from edge input
+		edges = edges.replaceAll("(?m)^[ \t]*\r?\n", "");
+		
 		char[] buf = edges.toCharArray();
 		BufferedReader br = new BufferedReader(new CharArrayReader(buf));
 		//a new graph
 		Graph g = new Graph();
+		
+		// check input characters of initial and end nodes
+		if(!Pattern.matches(nodePat, initialNode.trim()))
+			throw new InvalidInputException("Invalid initial node input. Please read the notes above the forms. ");
+		if(!Pattern.matches(nodePat, endNodes.trim()))
+			throw new InvalidInputException("Invalid end node input. Please read the notes above the forms. ");
 		try 
 		{
 			//a string for a next edge
@@ -372,7 +384,10 @@ public class GraphUtil {
 			{
 				//if the edge inputs are not in good format, throw the exception
 				if(!Pattern.matches(edgePat, str.trim()))
-					throw new InvalidInputException("An invalid input '" + str + "' for an edge. Please read the notes above the forms. ");
+					//throw new InvalidInputException("An invalid input '" + str + "' for an edge. Please read the notes above the forms. ");
+					//should not display faulty input strings, in case of malicious code was input
+					// updated by Lin
+					throw new InvalidInputException("Invalid edge input. Please read the notes above the forms. ");
 				//use a comma to separate tokens
 				newNodes = new StringTokenizer (str, ", ");
 				//get the value of source node of an edge
