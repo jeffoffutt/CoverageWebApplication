@@ -93,6 +93,7 @@ public class GraphCoverage extends HttpServlet {
 	        		// if any of inputs contain invalid characters
 	        		// clear it
 	        		// otherwise, keep it
+            		checkNotNull();
 	        		if(!Pattern.matches(GraphUtil.nodePat, initialNode.trim()))
 	        			initialNode = "";
 	        		if(!Pattern.matches(GraphUtil.nodePat, endNode.trim()))
@@ -161,6 +162,7 @@ public class GraphCoverage extends HttpServlet {
 	        		// if any of inputs contain invalid characters
 	        		// clear it
 	        		// otherwise, keep it
+               		checkNotNull();
 	        		if(!Pattern.matches(GraphUtil.nodePat, initialNode.trim()))
 	        			initialNode = "";
 	        		if(!Pattern.matches(GraphUtil.nodePat, endNode.trim()))
@@ -236,6 +238,7 @@ public class GraphCoverage extends HttpServlet {
 					// if any of inputs contain invalid characters
 					// clear it
 					// otherwise, keep it
+					checkNotNull();
 					if (!Pattern.matches(GraphUtil.nodePat, initialNode.trim()))
 						initialNode = "";
 					if (!Pattern.matches(GraphUtil.nodePat, endNode.trim()))
@@ -351,6 +354,7 @@ public class GraphCoverage extends HttpServlet {
 					// if any of inputs contain invalid characters
 					// clear it
 					// otherwise, keep it
+					checkNotNull();
 					if (!Pattern.matches(GraphUtil.nodePat, initialNode.trim()))
 						initialNode = "";
 					if (!Pattern.matches(GraphUtil.nodePat, endNode.trim()))
@@ -445,6 +449,7 @@ public class GraphCoverage extends HttpServlet {
 					// if any of inputs contain invalid characters
 					// clear it
 					// otherwise, keep it
+					checkNotNull();
 					if (!Pattern.matches(GraphUtil.nodePat, initialNode.trim()))
 						initialNode = "";
 					if (!Pattern.matches(GraphUtil.nodePat, endNode.trim()))
@@ -466,6 +471,7 @@ public class GraphCoverage extends HttpServlet {
 					// if any of inputs contain invalid characters
 					// clear it
 					// otherwise, keep it
+					checkNotNull();
 					if (!Pattern.matches(GraphUtil.nodePat, initialNode.trim()))
 						initialNode = "";
 					if (!Pattern.matches(GraphUtil.nodePat, endNode.trim()))
@@ -488,6 +494,7 @@ public class GraphCoverage extends HttpServlet {
 					// if any of inputs contain invalid characters
 					// clear it
 					// otherwise, keep it
+					checkNotNull();
 					if (!Pattern.matches(GraphUtil.nodePat, initialNode.trim()))
 						initialNode = "";
 					if (!Pattern.matches(GraphUtil.nodePat, endNode.trim()))
@@ -510,6 +517,7 @@ public class GraphCoverage extends HttpServlet {
 					// if any of inputs contain invalid characters
 					// clear it
 					// otherwise, keep it
+					checkNotNull();
 					if (!Pattern.matches(GraphUtil.nodePat, initialNode.trim()))
 						initialNode = "";
 					if (!Pattern.matches(GraphUtil.nodePat, endNode.trim()))
@@ -537,6 +545,7 @@ public class GraphCoverage extends HttpServlet {
 	        		// if any of inputs contain invalid characters
 	        		// clear it
 	        		// otherwise, keep it
+	        		checkNotNull();
 	        		if(!Pattern.matches(GraphUtil.nodePat, initialNode.trim()))
 	        			initialNode = "";
 	        		if(!Pattern.matches(GraphUtil.nodePat, endNode.trim()))
@@ -565,6 +574,7 @@ public class GraphCoverage extends HttpServlet {
 					// if any of inputs contain invalid characters
 					// clear it
 					// otherwise, keep it
+					checkNotNull();
 					if (!Pattern.matches(GraphUtil.nodePat, initialNode.trim()))
 						initialNode = "";
 					if (!Pattern.matches(GraphUtil.nodePat, endNode.trim()))
@@ -593,6 +603,7 @@ public class GraphCoverage extends HttpServlet {
 					// if any of inputs contain invalid characters
 					// clear it
 					// otherwise, keep it
+					checkNotNull();
 					if (!Pattern.matches(GraphUtil.nodePat, initialNode.trim()))
 						initialNode = "";
 					if (!Pattern.matches(GraphUtil.nodePat, endNode.trim()))
@@ -631,6 +642,7 @@ public class GraphCoverage extends HttpServlet {
 						// if any of inputs contain invalid characters
 						// clear it
 						// otherwise, keep it
+						checkNotNull();
 						if (!Pattern.matches(GraphUtil.nodePat, initialNode.trim()))
 							initialNode = "";
 						if (!Pattern.matches(GraphUtil.nodePat, endNode.trim()))
@@ -835,6 +847,18 @@ public class GraphCoverage extends HttpServlet {
 //        System.out.println("result: " + result);
         out.println(result);
 	}
+	
+	// to avoid 500 error with NPE
+	// for links like : ?action=Nodes
+	private void checkNotNull() {
+		if (edges == null)
+			edges = "";
+		if (initialNode == null)
+			initialNode = "";
+		if (endNode == null)
+			endNode = "";
+	}
+
 	/**
 	 * get the parameters from the request and create a graph with edges, an initial node, and final nodes
 	 * @param request
