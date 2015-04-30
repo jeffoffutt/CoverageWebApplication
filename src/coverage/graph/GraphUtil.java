@@ -20,6 +20,9 @@ import coverage.web.InvalidInputException;
  * @author Wuzhi Xu,  Date: Jan 5, 2007
  *	Modified by Nan Li, Date: March 4, 2009
  *
+ *  Modified by Lin Deng, Apr 2015
+ *  fixed several faults
+ *
  */
 public class GraphUtil {
 	// \x20 represents space; | represents 'OR' [a-zA-Z] represents characters without regarding LOWER CASE or UPPER CASE
@@ -28,13 +31,13 @@ public class GraphUtil {
 	// For example: x,1; x 2......
 	// defusePat represents ([a-zA-Z]|[0-9])* followed by ((,|\\x20)([a-zA-Z]|[0-9])*)*
 	// For example: x,1,2; x 1 2......
-	private static final String edgePat = "([a-zA-Z]|[0-9])+(,|\\x20)([a-zA-Z]|[0-9])+";
+	public static final String edgePat = "([a-zA-Z]|[0-9])+(,|(\\x20)+)([a-zA-Z]|[0-9])+";
 	private static final String defusePat = "([a-zA-Z]|[0-9])+((,|(\\x20)+)([a-zA-Z]|[0-9])+)+";
 	private static final String infeasibleSubpathsPat = "[0-9]+(,(\\x20)*[0-9]+(\\x20)*)*(;(\\x20)*[0-9]+(,(\\x20)*[0-9]+(\\x20)*)*)*";
 	// Lin added it for checking node input
 	// For example: 1 or 1 2 or 1 2 3 or a 1 2 ...
-	// empty is allowed
-	private static final String nodePat = "([a-zA-Z]|[0-9])*((,|(\\x20)+)([a-zA-Z]|[0-9])+)*";
+	// empty is also allowed
+	public static final String nodePat = "([a-zA-Z]|[0-9])*((,|(\\x20)+)([a-zA-Z]|[0-9])+)*";
 	/**
 	 * *TODO: return a standard string to meet the requirement of imported java applet
 	 * 
@@ -359,6 +362,8 @@ public class GraphUtil {
 	 */
 	public static Graph readGraph(String edges, String initialNode, String endNodes) throws InvalidInputException
 	{
+		if(edges==null)
+			throw new InvalidInputException("Invalid input. Please read the notes above the forms. ");
 		// remove empty lines from edge input
 		edges = edges.replaceAll("(?m)^[ \t]*\r?\n", "");
 		

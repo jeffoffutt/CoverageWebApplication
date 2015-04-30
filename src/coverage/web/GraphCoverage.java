@@ -7,14 +7,11 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.regex.Pattern;
 
-import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 
-import coverage.graph.Edge;
 import coverage.graph.Graph;
 import coverage.graph.GraphUtil;
 import coverage.graph.InvalidGraphException;
@@ -74,7 +71,7 @@ public class GraphCoverage extends HttpServlet {
         + "<p style=\"text-align:center;font-size:150%;font-weight:bold\">Graph Coverage Web Application</p>\n";
         
         
-        
+        // add js lib for graph display
         result +=
         "<script src=\"http://ajax.googleapis.com/ajax/libs/jquery/1.3.2/jquery.min.js\"></script>\n"
         +"<script src=\"http://cs.gmu.edu/~ldeng2/js/springy.js\"></script>\n"
@@ -93,6 +90,14 @@ public class GraphCoverage extends HttpServlet {
             	title = "Edge Coverage";
             	if(warning != null)
             	{
+	        		// if any of inputs contain invalid characters
+	        		// clear it
+	        		// otherwise, keep it
+	        		if(!Pattern.matches(GraphUtil.nodePat, initialNode.trim()))
+	        			initialNode = "";
+	        		if(!Pattern.matches(GraphUtil.nodePat, endNode.trim()))
+	        			endNode = "";
+	        		
             		result += printEdgeForm(edges, initialNode, endNode);
             		result += printResult(warning);
             	}
@@ -153,6 +158,14 @@ public class GraphCoverage extends HttpServlet {
                	title = "Edge-Pair Coverage using the prefix graph algorithm";
                	if(warning != null)
                	{
+	        		// if any of inputs contain invalid characters
+	        		// clear it
+	        		// otherwise, keep it
+	        		if(!Pattern.matches(GraphUtil.nodePat, initialNode.trim()))
+	        			initialNode = "";
+	        		if(!Pattern.matches(GraphUtil.nodePat, endNode.trim()))
+	        			endNode = "";
+	        		
                		result += printEdgeForm(edges, initialNode, endNode);
                		result += printResult(warning);
                	}else
@@ -219,71 +232,90 @@ public class GraphCoverage extends HttpServlet {
         	 else if (action == null && algorithm2Action.equalsIgnoreCase("Prime Path Coverage"))
              {      	  
            		String warning = validate(request);
-                	title = "Prime Path Coverage using the prefix graph algorithm";  
-                	List<Path> primePaths = new ArrayList<Path>();
-                	primePaths = g.findPrimePaths();
-                	long start = System.nanoTime();
-            		Graph prefix = GraphUtil.getPrefixGraph(primePaths);
-            		Graph bipartite = GraphUtil.getBipartiteGraph(prefix, initialNode, endNode);
-            		try {
-     				paths = bipartite.findMinimumPrimePathCoverageViaPrefixGraphOptimized(g.findPrimePaths());
-     			} catch (InvalidGraphException e) {
-     				// TODO Auto-generated catch block
-     				e.printStackTrace();
-     			}
-            		//maximum ratio of test requirements over test paths
-            		int maxRatio = 0;
-            		//maximum length of test paths
-            		int maxLength = 0;
-     			List<Path> splittedPaths = new ArrayList<Path>();
-     			try {
-     				splittedPaths = g.splittedPathsFromSuperString(paths.get(0), g.findTestPath());
-     				//compute the maximum ratio of test requirements over test paths
-     				for(int i = 0; i < splittedPaths.size();i++){
-     					int tempCount = 0;
-     					for(int j = 0; j < primePaths.size();j++){
-     						if(primePaths.get(j).isSubpath(splittedPaths.get(i)))
-     							tempCount++;
-     					}
-     					if(maxRatio < tempCount)
-     						maxRatio = tempCount;
-     					if(maxLength < splittedPaths.get(i).size())
-     						maxLength = splittedPaths.get(i).size();
-     				}
-     				//System.out.println("Maximum Ratio: " + maxRatio);
-     				//System.out.println("Maximum Length: " + maxLength);
-     			} catch (InvalidGraphException e) {
-     				// TODO Auto-generated catch block
-     				e.printStackTrace();
-     			}
-     			for(Path p:splittedPaths){
-     				paths.add(p);
-     			}
-     		/*	try {
-     				for(Path p:g.findTestPath()){
-     					paths.add(p);
-     				}
-     			} catch (InvalidGraphException e) {
-     				// TODO Auto-generated catch block
-     				e.printStackTrace();
-     			}*/
-           		long end = System.nanoTime();
-            	    long duration = end - start;
-            	    //System.out.println("running time of prefix graph = " + duration);
-            	    
-            	    int numberOfNodes = 0;
-     			for(int i = 1;i < paths.size();i++){
-     				numberOfNodes += paths.get(i).size();
-     			}
+				if (warning != null) {
+					// if any of inputs contain invalid characters
+					// clear it
+					// otherwise, keep it
+					if (!Pattern.matches(GraphUtil.nodePat, initialNode.trim()))
+						initialNode = "";
+					if (!Pattern.matches(GraphUtil.nodePat, endNode.trim()))
+						endNode = "";
 
-     			paths.remove(0);
-            		result += printEdgeForm(edges, initialNode, endNode);
-            		try {
-     				result += printResult(printPrimePathCoverage(paths, null, title));
-     			} catch (InvalidGraphException e) {
-     				// TODO Auto-generated catch block
-     				e.printStackTrace();
-     			}
+					result += printEdgeForm(edges, initialNode, endNode);
+					result += printResult(warning);
+				} else
+				{
+					title = "Prime Path Coverage using the prefix graph algorithm";
+					List<Path> primePaths = new ArrayList<Path>();
+					primePaths = g.findPrimePaths();
+					long start = System.nanoTime();
+					Graph prefix = GraphUtil.getPrefixGraph(primePaths);
+					Graph bipartite = GraphUtil.getBipartiteGraph(prefix,
+							initialNode, endNode);
+					try {
+						paths = bipartite
+								.findMinimumPrimePathCoverageViaPrefixGraphOptimized(g
+										.findPrimePaths());
+					} catch (InvalidGraphException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					// maximum ratio of test requirements over test paths
+					int maxRatio = 0;
+					// maximum length of test paths
+					int maxLength = 0;
+					List<Path> splittedPaths = new ArrayList<Path>();
+					try {
+						splittedPaths = g.splittedPathsFromSuperString(
+								paths.get(0), g.findTestPath());
+						// compute the maximum ratio of test requirements over
+						// test paths
+						for (int i = 0; i < splittedPaths.size(); i++) {
+							int tempCount = 0;
+							for (int j = 0; j < primePaths.size(); j++) {
+								if (primePaths.get(j).isSubpath(
+										splittedPaths.get(i)))
+									tempCount++;
+							}
+							if (maxRatio < tempCount)
+								maxRatio = tempCount;
+							if (maxLength < splittedPaths.get(i).size())
+								maxLength = splittedPaths.get(i).size();
+						}
+						// System.out.println("Maximum Ratio: " + maxRatio);
+						// System.out.println("Maximum Length: " + maxLength);
+					} catch (InvalidGraphException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					for (Path p : splittedPaths) {
+						paths.add(p);
+					}
+					/*
+					 * try { for(Path p:g.findTestPath()){ paths.add(p); } }
+					 * catch (InvalidGraphException e) { // TODO Auto-generated
+					 * catch block e.printStackTrace(); }
+					 */
+					long end = System.nanoTime();
+					long duration = end - start;
+					// System.out.println("running time of prefix graph = " +
+					// duration);
+
+					int numberOfNodes = 0;
+					for (int i = 1; i < paths.size(); i++) {
+						numberOfNodes += paths.get(i).size();
+					}
+
+					paths.remove(0);
+					result += printEdgeForm(edges, initialNode, endNode);
+					try {
+						result += printResult(printPrimePathCoverage(paths,
+								null, title));
+					} catch (InvalidGraphException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+				}
              }//end else if for test
         }
         else{
@@ -315,29 +347,44 @@ public class GraphCoverage extends HttpServlet {
 	        {   
 	      	  long start = System.nanoTime();
 	        	String warning = validate(request);
-	        	title = "Prime Paths";
-	        	paths = g.findPrimePaths();
-	        	result += printEdgeForm(edges, initialNode, endNode);
-	
-	        	if(infeasiblePrimePaths == null)
-	  				infeasiblePrimePaths = "";
-	        //	try
-	       // 	{
-	        		
-	        	//	paths = g.findPrimePaths1(infeasiblePrimePaths);
-	      //  	}
-	      //  	catch(Exception e){
-	      //  		infeasiblePrimePaths = "";
-	       // 		warning = printWarning(e);
-	      //  		result += printResult(warning);
-	      //  	}
-	       // 	if(infeasiblePrimePaths == null)
-	       // 		infeasiblePrimePaths = "";
-	        	
-	        	result += printResult(printPrimePaths(paths, warning, title));
-	         long end = System.nanoTime();
-	    	   long duration = end - start;
-	    	  //System.out.println("running time = " + duration);
+				if (warning != null) {
+					// if any of inputs contain invalid characters
+					// clear it
+					// otherwise, keep it
+					if (!Pattern.matches(GraphUtil.nodePat, initialNode.trim()))
+						initialNode = "";
+					if (!Pattern.matches(GraphUtil.nodePat, endNode.trim()))
+						endNode = "";
+
+					result += printEdgeForm(edges, initialNode, endNode);
+					result += printResult(warning);
+
+				} else {
+
+					title = "Prime Paths";
+					paths = g.findPrimePaths();
+					result += printEdgeForm(edges, initialNode, endNode);
+
+					if (infeasiblePrimePaths == null)
+						infeasiblePrimePaths = "";
+					// try
+					// {
+
+					// paths = g.findPrimePaths1(infeasiblePrimePaths);
+					// }
+					// catch(Exception e){
+					// infeasiblePrimePaths = "";
+					// warning = printWarning(e);
+					// result += printResult(warning);
+					// }
+					// if(infeasiblePrimePaths == null)
+					// infeasiblePrimePaths = "";
+
+					result += printResult(printPrimePaths(paths, warning, title));
+					long end = System.nanoTime();
+					long duration = end - start;
+					// System.out.println("running time = " + duration);
+				}
 	        }
 	        else if(action.equalsIgnoreCase("Test"))
 	        {   
@@ -394,45 +441,110 @@ public class GraphCoverage extends HttpServlet {
 	        else if(action.equalsIgnoreCase("Simple Paths"))
 	        {
 	        	String warning = validate(request);
+				if (warning != null) {
+					// if any of inputs contain invalid characters
+					// clear it
+					// otherwise, keep it
+					if (!Pattern.matches(GraphUtil.nodePat, initialNode.trim()))
+						initialNode = "";
+					if (!Pattern.matches(GraphUtil.nodePat, endNode.trim()))
+						endNode = "";
+
+					result += printEdgeForm(edges, initialNode, endNode);
+					result += printResult(warning);
+
+				} else {
 	        	title = "Simple Paths";
 	    		paths = g.findSimplePaths();
 	    		result += printEdgeForm(edges, initialNode, endNode);
 	    		result += printResult(printRequirements(paths, warning, title));
-	        	        	        	
+				}	        	
 	        }else if(action.equalsIgnoreCase("Nodes"))
 	        {
 	      	  	String warning = validate(request);
+				if (warning != null) {
+					// if any of inputs contain invalid characters
+					// clear it
+					// otherwise, keep it
+					if (!Pattern.matches(GraphUtil.nodePat, initialNode.trim()))
+						initialNode = "";
+					if (!Pattern.matches(GraphUtil.nodePat, endNode.trim()))
+						endNode = "";
+
+					result += printEdgeForm(edges, initialNode, endNode);
+					result += printResult(warning);
+
+				} else {
 	      	  	title = "Nodes";
 	      		paths = g.findNodes();
 	      		result += printEdgeForm(edges, initialNode, endNode);
 	      		result += printResult(printRequirements(paths, warning, title));
+				}
 	        }
 	        else if(action.equalsIgnoreCase("Edges"))
 	        {
 	      	  String warning = validate(request);
+				if (warning != null) {
+					// if any of inputs contain invalid characters
+					// clear it
+					// otherwise, keep it
+					if (!Pattern.matches(GraphUtil.nodePat, initialNode.trim()))
+						initialNode = "";
+					if (!Pattern.matches(GraphUtil.nodePat, endNode.trim()))
+						endNode = "";
+
+					result += printEdgeForm(edges, initialNode, endNode);
+					result += printResult(warning);
+
+				} else {
 	          	title = "Edges";
 	      		paths = g.findEdges();
 	      		result += printEdgeForm(edges, initialNode, endNode);
 	      		result += printResult(printRequirements(paths, warning, title));
+				}
 	        }
 	        else if(action.equalsIgnoreCase("Edge-Pair"))
 	        {
 	      	  String warning = validate(request);
+				if (warning != null) {
+					// if any of inputs contain invalid characters
+					// clear it
+					// otherwise, keep it
+					if (!Pattern.matches(GraphUtil.nodePat, initialNode.trim()))
+						initialNode = "";
+					if (!Pattern.matches(GraphUtil.nodePat, endNode.trim()))
+						endNode = "";
+
+					result += printEdgeForm(edges, initialNode, endNode);
+					result += printResult(warning);
+
+				} else {
 	          	title = "Edge-Pairs";
 	      		paths = g.findEdgePairs();
 	      		result += printEdgeForm(edges, initialNode, endNode);
 	      		if(infeasibleEdgePairs == null)
 	      			infeasibleEdgePairs = "";
 	      		result += printResult(printEdgePairs(paths, warning, title));
+				}
 	        }
 	        else if(action.equalsIgnoreCase("Node Coverage"))
 	        {
+	        	
 	        	String warning = validate(request);
 	        	title = "Node Coverage";
 	        	if(warning!=null)
 	        	{
+	        		// if any of inputs contain invalid characters
+	        		// clear it
+	        		// otherwise, keep it
+	        		if(!Pattern.matches(GraphUtil.nodePat, initialNode.trim()))
+	        			initialNode = "";
+	        		if(!Pattern.matches(GraphUtil.nodePat, endNode.trim()))
+	        			endNode = "";
+	        		
 	        		result+=printEdgeForm(edges, initialNode, endNode);
 	        		result+=printResult(warning);
+	        		
 	        	}else
 	        	{
 	        		try {
@@ -449,13 +561,19 @@ public class GraphCoverage extends HttpServlet {
 	        {
 	        	String warning = validate(request);
 	        	title = "Edge Coverage";
-	        	if(warning != null)
-	        	{
-	        		result += printEdgeForm(edges, initialNode, endNode);
-	        		result += printResult(warning);
-	        	}
-	        	else
-	        	{
+				if (warning != null) {
+					// if any of inputs contain invalid characters
+					// clear it
+					// otherwise, keep it
+					if (!Pattern.matches(GraphUtil.nodePat, initialNode.trim()))
+						initialNode = "";
+					if (!Pattern.matches(GraphUtil.nodePat, endNode.trim()))
+						endNode = "";
+
+					result += printEdgeForm(edges, initialNode, endNode);
+					result += printResult(warning);
+
+				} else {
 	        		try {
 						paths=g.findEdgeCoverage();
 						result+=printEdgeForm(edges, initialNode, endNode);
@@ -471,12 +589,19 @@ public class GraphCoverage extends HttpServlet {
 	        {
 	          	String warning = validate(request);
 	          	title = "Edge-Pair Coverage";
-	          	if(warning != null)
-	          	{
-	          		result += printEdgeForm(edges, initialNode, endNode);
-	          		result += printResult(warning);
-	          	}else
-	          	{
+				if (warning != null) {
+					// if any of inputs contain invalid characters
+					// clear it
+					// otherwise, keep it
+					if (!Pattern.matches(GraphUtil.nodePat, initialNode.trim()))
+						initialNode = "";
+					if (!Pattern.matches(GraphUtil.nodePat, endNode.trim()))
+						endNode = "";
+
+					result += printEdgeForm(edges, initialNode, endNode);
+					result += printResult(warning);
+
+				} else {
 	          		if(infeasibleEdgePairs == null)
 	          			infeasibleEdgePairs = "";
 	          		try {
@@ -502,13 +627,19 @@ public class GraphCoverage extends HttpServlet {
 	      	  
 	        		String warning = validate(request);
 	        		title = "Prime Path Coverage";
-	        		if(warning != null)
-	        		{
-	        			result += printEdgeForm(edges, initialNode, endNode);
-	        			result += printResult(warning);
-	        		}
-	        		else
-	        		{
+					if (warning != null) {
+						// if any of inputs contain invalid characters
+						// clear it
+						// otherwise, keep it
+						if (!Pattern.matches(GraphUtil.nodePat, initialNode.trim()))
+							initialNode = "";
+						if (!Pattern.matches(GraphUtil.nodePat, endNode.trim()))
+							endNode = "";
+
+						result += printEdgeForm(edges, initialNode, endNode);
+						result += printResult(warning);
+
+					} else {
 	        			//maximum ratio of test requirements over test paths
 	               		int maxRatio = 0;
 	               		//maximum length of test paths
@@ -685,7 +816,10 @@ public class GraphCoverage extends HttpServlet {
 	       		result += printEdgeForm(edges, initialNode, endNode);
 	       		result += printResult(printRequirements(paths, warning, title));
 	        }//end else if for test
-       
+	        // for anything else, send it back to the page
+	        else{
+	        	response.sendRedirect("GraphCoverage");
+	        }
         }
         
         

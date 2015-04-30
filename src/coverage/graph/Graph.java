@@ -6,6 +6,8 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import coverage.web.InvalidInputException;
+
 /**
  * 
  * 
@@ -907,13 +909,14 @@ public class Graph extends GraphBase{
 			{			
 				Path p1 = result.get(i);
 				Path p2 = resultCopy.get(j);
-				if(p1 != p2 && p1.sidetrip(p2))
+				if(!p1.equals(p2) && p1.sidetrip(p2))
 					resultCopy.remove(j);	
 			}
 		
 		//to minimize the test paths set
 		//remove redundant paths if all edges have been reached by any other path
 		List<Path> resultCopy3 = new ArrayList<Path>();
+		
 		//make a copy of resultCopy
 		List<Path> resultCopy2 = new ArrayList<Path>();
 		for(int i = 0;i < resultCopy.size();i++)
@@ -945,6 +948,11 @@ public class Graph extends GraphBase{
 			if(edgeCopy.size() == 0)
 				break;
 		}
+		
+		// remove redundant test paths??
+		
+		
+		
 		return resultCopy3;
 	}
 
@@ -965,10 +973,12 @@ public class Graph extends GraphBase{
 	{
 		//get all possible test paths
 		List<Path> result = findTestPath();
+	
 		//make a copy to resultCopy
 		List<Path> resultCopy = new ArrayList<Path>();
 		for(int i = 0;i < result.size();i++)
 			resultCopy.add(result.get(i));
+
 		//for each path in result check if exists any path in resultCopy tours it with Detours
 		//if p2 tours p1 with Detours, remove the p2 from the resultCopy
 		for(int i = 0;i < result.size();i++)
@@ -976,14 +986,15 @@ public class Graph extends GraphBase{
 			{			
 				Path p1 = result.get(i);
 				Path p2 = resultCopy.get(j);
-				
-				if(p1 != p2 && p1.detour(p2)){
+				if(!p1.equals(p2) && p1.detour(p2)){
 					resultCopy.remove(j);
 				}
 			}
+
 		//remove redundent nodes from paths
 		//e.g. all nodes should appear once in paths of node coverage
 		//thus,the result is [0,4,6] rather than [0,4,4,6]
+
 		for(int i = 0;i < resultCopy.size();i++){
 			Path p = resultCopy.get(i);
 	
@@ -993,7 +1004,6 @@ public class Graph extends GraphBase{
 			}
 		
 		}
-		
 		//the last step to minimize the set
 		//clear up the test paths that can tour any other path with Detours again
 		
@@ -1009,7 +1019,7 @@ public class Graph extends GraphBase{
 				Path p1 = resultCopy.get(i);
 				Path p2 = resultCopy1.get(j);
 				
-				if(p1 != p2 && p1.detour(p2)){
+				if(!p1.equals(p2) && p1.detour(p2)){
 					resultCopy1.remove(j);
 				}
 			}
@@ -1116,14 +1126,14 @@ public class Graph extends GraphBase{
 			String nodeStr = "";
 			for(Node node:nodesCopy)
 				nodeStr += " " + node.toString();
-			throw new InvalidGraphException("The Nodes: " + nodeStr + " are not connected.");		
+			throw new InvalidGraphException("The Nodes: " + nodeStr + " are not connected to the initial nodes.");		
 		}
 		else if(nodesCopy.size() == 1)
 		{
 			String nodeStr = "";
 			for(Node node:nodesCopy)
 				nodeStr += " " + node.toString();
-			throw new InvalidGraphException("The Node: " + nodeStr + " is not connected.");	
+			throw new InvalidGraphException("The Node: " + nodeStr + " is not connected to the initial nodes.");	
 		}
 	}
 	
@@ -1284,11 +1294,14 @@ public class Graph extends GraphBase{
 	 * the sidetrips are some of feasible prime paths
 	 * @param infeasiblePrimePaths
 	 * @return
+	 * @throws InvalidGraphException 
 	 */
-	public List<Path> findPrimePaths1(String infeasiblePrimePaths)
+	public List<Path> findPrimePaths1(String infeasiblePrimePaths) throws InvalidGraphException
 	{
 		List<Path> simplePaths=findSimplePaths();
-		
+//		System.out.println(simplePaths);
+		if(simplePaths.size()==0)
+			throw new InvalidGraphException("Invalid edge input.");
 		//sort list in term of the size of path
 		quickSort(simplePaths, 1, simplePaths.size());
 		List<Path> primePaths = new ArrayList<Path>();
@@ -2298,7 +2311,7 @@ public class Graph extends GraphBase{
 		return minimumPaths;
 	}
 	
-	public List<Path> splittedPathsFromSuperString(Path superString, List<Path> testPaths){
+	public List<Path> splittedPathsFromSuperString(Path superString, List<Path> testPaths) throws InvalidGraphException{
 	//	System.out.println("super string: " + superString.toString());
 	/*	System.out.println("-----test paths------");
 		for(Path path: testPaths){
@@ -2313,6 +2326,9 @@ public class Graph extends GraphBase{
 		List<Path> paths = new ArrayList<Path>();
 //		System.out.println("size of starts: " + starts.size());
 		//List<Path> localTestPaths = testPaths;
+		if(superString==null || superString.size() == 0)
+			throw new InvalidGraphException("Invalid edge input.");
+//		System.out.println(superString.size());
 		Path testPath = new Path(superString.get(0));
 		for(int i = 1; i < superString.size();i++){
 			Node node = superString.get(i);
