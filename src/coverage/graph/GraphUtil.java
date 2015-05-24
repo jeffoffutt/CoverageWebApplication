@@ -384,6 +384,8 @@ public class GraphUtil {
 			//a StringTokinizer
 			StringTokenizer newNodes = null;
 			int count = 0;
+			// add edges to a set to prevent duplicates from being displayed
+			HashSet<String> edgeSet = new HashSet<String>();
 			//get edges and set edges for the graph
 			while((str = br.readLine()) != null)
 			{
@@ -393,6 +395,10 @@ public class GraphUtil {
 					//should not display faulty input strings, in case of malicious code was input
 					// updated by Lin
 					throw new InvalidInputException("Invalid edge input. Please read the notes above the forms. ");
+				if (edgeSet.contains(str))
+					continue;
+				else
+					edgeSet.add(str);
 				//use a comma to separate tokens
 				newNodes = new StringTokenizer (str, ", ");
 				//get the value of source node of an edge
