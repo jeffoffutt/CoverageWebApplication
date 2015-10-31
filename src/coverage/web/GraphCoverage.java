@@ -73,9 +73,9 @@ public class GraphCoverage extends HttpServlet {
         
         // add js lib for graph display
         result +=
-        "<script src=\"http://ajax.googleapis.com/ajax/libs/jquery/1.3.2/jquery.min.js\"></script>\n"
-        +"<script src=\"http://cs.gmu.edu/~ldeng2/js/springy.js\"></script>\n"
-        +"<script src=\"http://cs.gmu.edu/~ldeng2/js/springyui.js\"></script>\n";
+        "<script src=\"https://cs.gmu.edu:8443/ldeng2/coverage/jquery-min.js\"></script>\n"
+        +"<script src=\"https://cs.gmu.edu:8443/ldeng2/coverage/springy.js\"></script>\n"
+        +"<script src=\"https://cs.gmu.edu:8443/ldeng2/coverage/springyui.js\"></script>\n";
 
         
         String action = request.getParameter("action");
