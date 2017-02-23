@@ -29,6 +29,13 @@ import coverage.graph.Path;
  * 
  * Modified by Lin Deng, for replacing applet with JavaScript graph
  * Date: Apr. 2015
+ * 
+ * Modified by Lin Deng, for accommodating https
+ * Date: Oct. 2015
+ * 
+ * Modified by Lin Deng 02/22/2017
+ * Added function for sharing a graph with URL
+ * 
  */
 public class GraphCoverage extends HttpServlet {
 	
@@ -52,6 +59,10 @@ public class GraphCoverage extends HttpServlet {
 	String[] infeasibleEdgePairsString;//store infeasible prime paths
 	boolean[] infeasibleEdgePairsSigns;//represent if that prime path can be toured directly or with sidetrips
 	
+	
+	String hiddenLink = "https://cs.gmu.edu:8443/offutt/coverage/GraphCoverage?";
+	boolean showShareButton = false;
+	
 	public void doGet (HttpServletRequest request, HttpServletResponse response)
 	throws ServletException, IOException
 	{
@@ -73,12 +84,107 @@ public class GraphCoverage extends HttpServlet {
         
         // add js lib for graph display
         result +=
-        "<script src=\"http://ajax.googleapis.com/ajax/libs/jquery/1.3.2/jquery.min.js\"></script>\n"
-        +"<script src=\"http://cs.gmu.edu/~ldeng2/js/springy.js\"></script>\n"
-        +"<script src=\"http://cs.gmu.edu/~ldeng2/js/springyui.js\"></script>\n";
-
+        "<script src=\"jquery-min.js\"></script>\n"
+        +"<script src=\"springy.js\"></script>\n"
+        +"<script src=\"springyui.js\"></script>\n"
+        
+        // js code for retrieving the url
+        // and prompt to users to copy
+        +"<script>"
+        +"function copyToClipboard(text) {"
+   //     +"url = window.location.href;"
+//        +"text = url + text;"
+        +"window.prompt(\"Copy to clipboard: Ctrl+C\", text);"
+        +"}"
+        +"</script>"
+        ;
+        
         
         String action = request.getParameter("action");
+        // build hidden link
+        hiddenLink = "https://cs.gmu.edu:8443/offutt/coverage/GraphCoverage?";
+        showShareButton = false;
+        String initialNodeStr = request.getParameter("initialNode");
+		String edgesStr = request.getParameter("edges");
+		String endNodeStr = request.getParameter("endNode");
+        
+		// process edgesStr
+		// edges=1+2%0D%0A1+3%0D%0A2+4%0D%0A3+4%0D%0A3+5%0D%0A4+5%0D%0A
+
+		String edgesLink = "";
+		
+		// construct the link
+		if(edgesStr!=null)
+		{
+			// split edges
+			String[] lines = edgesStr.split("\\r?\\n");		
+        
+			for(String str : lines)
+			{
+				// little verification??
+				
+				// replace white space to +
+				str = str.trim();
+				str = str.replaceAll("\\s+","+");
+				edgesLink = edgesLink + str +"%0D%0A";
+			}
+			hiddenLink = hiddenLink + "edges="+ edgesLink + "&";
+		}
+		
+//		initialNode=1&endNode=5&action=Edges
+		if (initialNodeStr!=null)
+		{
+			// if more than one
+			// add +
+			initialNodeStr = initialNodeStr.trim();
+			initialNodeStr = initialNodeStr.replaceAll("\\s+","+");
+			
+			hiddenLink = hiddenLink + "initialNode="+ initialNodeStr + "&";
+		}
+		
+		if (endNodeStr!=null)
+		{
+			// if more than one
+			// add +
+			endNodeStr = endNodeStr.trim();
+			endNodeStr = endNodeStr.replaceAll("\\s+","+");
+			hiddenLink = hiddenLink + "endNode="+ endNodeStr + "&";
+		}
+		
+		if(action!=null)
+		{
+			// process the whitespace in action
+			String actionStr = new String(action);
+			actionStr = actionStr.trim();
+			actionStr = actionStr.replaceAll("\\s+", "%20");
+			hiddenLink = hiddenLink + "action=" + actionStr;
+			if (!action.equals("New Graph"))
+				showShareButton = true;  // only display share button when there is an action
+		}
+		else if(request.getParameter("algorithm2")!=null) // specific for new algos
+		{
+			String algorithm2ActionStr = request.getParameter("algorithm2");
+			algorithm2ActionStr = algorithm2ActionStr.trim();
+			algorithm2ActionStr = algorithm2ActionStr.replaceAll("\\s+", "%20");
+			hiddenLink = hiddenLink + "algorithm2=" + algorithm2ActionStr;
+			showShareButton = true;  // only display share button when there is an action
+		}
+		else
+		{
+			showShareButton = false;
+		}
+		
+		
+		// if the last one is & or ?
+		// trim it out
+		
+		if(hiddenLink.charAt(hiddenLink.length()-1)=='&')
+		{
+			hiddenLink = hiddenLink.substring(0, hiddenLink.length()-1);
+		}
+		
+		
+		
         String algorithm2Action = null;
         if(action == null)
         	algorithm2Action = request.getParameter("algorithm2");
@@ -251,6 +357,9 @@ public class GraphCoverage extends HttpServlet {
 					title = "Prime Path Coverage using the prefix graph algorithm";
 					List<Path> primePaths = new ArrayList<Path>();
 					primePaths = g.findPrimePaths();
+					
+					
+					
 					long start = System.nanoTime();
 					Graph prefix = GraphUtil.getPrefixGraph(primePaths);
 					Graph bipartite = GraphUtil.getBipartiteGraph(prefix,
@@ -657,12 +766,13 @@ public class GraphCoverage extends HttpServlet {
 	               		//maximum length of test paths
 	               		int maxLength = 0;
 	               		
-	        			if(infeasibleSubpathsString == null || infeasibleSubpathsString.equals("")){
+	        			if(infeasibleSubpathsString == null || infeasibleSubpathsString.equals(""))
+	        			{// no infeasible subpaths
 		        			if(infeasiblePrimePaths == null)
 		        				infeasiblePrimePaths = "";
 		        			try {
 		        				List<Path> primePaths = g.findPrimePaths();
-		        				paths = g.findPrimePathCoverage(infeasiblePrimePaths);
+		        				paths = g.findPrimePathCoverage(infeasiblePrimePaths);  
 		        				
 		        				//compute the maximum ratio of test requirements over test paths
 		        				for(int i = 0; i < paths.size();i++){
@@ -695,7 +805,7 @@ public class GraphCoverage extends HttpServlet {
 		        				result += printResult(warning);
 		        			}//end catch	
 	        			}
-	        			else{
+	        			else{    // has infeasible subpaths
 	        				if(infeasiblePrimePaths == null)
 	           				infeasiblePrimePaths = "";
 	        				if(infeasibleSubpaths != null){
@@ -838,9 +948,9 @@ public class GraphCoverage extends HttpServlet {
         result += "<p style=\"font-size:80%;font-family:monospace\">\n"
         +"Companion software\n"
         +"<br>to <i>Introduction to Software Testing</i>, Ammann and Offutt.\n"
-        +"<br>Implementation by Wuzhi Xu and Nan Li.\n"
-        +"<br>&copy; 2007-2013, all rights reserved.\n"
-        +"<br>Last update: 24-April-2013\n</font></p>"
+        +"<br>Implementation by Wuzhi Xu, Nan Li, Lin Deng, and Scott Brown.\n"
+        +"<br>&copy; 2007-2016, all rights reserved.\n"
+        +"<br>Last update: 01-Nov-2015\n</font></p>"
         +"</body>"
         +"</html>";
 
@@ -1754,9 +1864,31 @@ public class GraphCoverage extends HttpServlet {
 			+"		&nbsp;<input type=\"submit\" value=\"Minimal-MUMCUT Coverage\" name=\"action\">\n"
 			+"  </td>\n"	
 			+"</tr>\n"
-			+"</table>\n"
-			//leave this form out and put it in the printPrimePaths()	
-			+"    </form>\n";
+			+"<tr><td></tr> <tr><td></tr>\n";
+		// only display the share button when an action has been submitted
+		// i.e. a graph is displayed
+		// otherwise, hide the button
+		if(showShareButton)
+		{
+			form = form
+			+"<tr>\n" ;			
+		}else
+		{
+			form = form
+			+"<tr style=\"visibility:collapse;\">\n" ;
+		}
+		
+		form = form 
+		+"  <td align=right width = \"15%\" ><b>Share Graph:</b></td>\n" 
+		+"  <td aligh=\"center\" width=\"85%\" >\n" 
+		+"	  &nbsp;<img onclick=\"javascript:copyToClipboard('"+ hiddenLink +"')\" src=\"share.png\" style=\"width:70px;height:20px;\"/>" 
+		+"  </td>\n"	
+		+"</tr>\n"
+		+"</table>\n"
+		//leave this form out and put it in the printPrimePaths()	
+		// need to leave it out for enabling infeasible paths
+	//	+"    </form>\n"
+	;
 		
 		return form;
 	}

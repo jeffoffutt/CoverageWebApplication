@@ -18,6 +18,11 @@ import coverage.web.InvalidInputException;
  *<br>The last two properties also called in the class 'connected'
  *  * @author Wuzhi Xu, Date: Dec 12, 2006
  * Modified by Nan Li
+ * Modified by Scott Brown
+ * Modified by Lin Deng 02/22/2017 Fixed a fault:
+ * 
+ * http://localhost:8080/CoverageWebApplication/coverage/GraphCoverage?edges=1+2%0D%0A2+3%0D%0A2+4%0D%0A4+3%0D%0A3+5%0D%0A3+6%0D%0A5+3%0D%0A6+1%0D%0A1+7%0D%0A&initialNode=1&endNode=7&action=Node Coverage
+ * 
  * 
  */
 public class Graph extends GraphBase{
