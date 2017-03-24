@@ -84,7 +84,6 @@ public class GraphCoverage extends HttpServlet {
         
         // add js lib for graph display
         result +=
-<<<<<<< HEAD
         "<script src=\"jquery-min.js\"></script>\n"
         +"<script src=\"springy.js\"></script>\n"
         +"<script src=\"springyui.js\"></script>\n"
@@ -100,12 +99,6 @@ public class GraphCoverage extends HttpServlet {
         +"</script>"
         ;
         
-=======
-        "<script src=\"https://cs.gmu.edu:8443/ldeng2/coverage/jquery-min.js\"></script>\n"
-        +"<script src=\"https://cs.gmu.edu:8443/ldeng2/coverage/springy.js\"></script>\n"
-        +"<script src=\"https://cs.gmu.edu:8443/ldeng2/coverage/springyui.js\"></script>\n";
-
->>>>>>> origin/master
         
         String action = request.getParameter("action");
         // build hidden link
@@ -181,6 +174,13 @@ public class GraphCoverage extends HttpServlet {
 			showShareButton = false;
 		}
 		
+		if (initialNodeStr != null && endNodeStr != null && edgesStr != null) {
+			if (initialNodeStr.equals("") && endNodeStr.equals("")
+					&& edgesStr.equals("")) // if provided nothing
+			{
+				showShareButton = false;
+			}
+		}
 		
 		// if the last one is & or ?
 		// trim it out
@@ -956,8 +956,8 @@ public class GraphCoverage extends HttpServlet {
         +"Companion software\n"
         +"<br>to <i>Introduction to Software Testing</i>, Ammann and Offutt.\n"
         +"<br>Implementation by Wuzhi Xu, Nan Li, Lin Deng, and Scott Brown.\n"
-        +"<br>&copy; 2007-2016, all rights reserved.\n"
-        +"<br>Last update: 01-Nov-2015\n</font></p>"
+        +"<br>&copy; 2007-2017, all rights reserved.\n"
+        +"<br>Last update: 22-Feb-2017\n</font></p>"
         +"</body>"
         +"</html>";
 
