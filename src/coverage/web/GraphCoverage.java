@@ -84,6 +84,7 @@ public class GraphCoverage extends HttpServlet {
         
         // add js lib for graph display
         result +=
+<<<<<<< HEAD
         "<script src=\"jquery-min.js\"></script>\n"
         +"<script src=\"springy.js\"></script>\n"
         +"<script src=\"springyui.js\"></script>\n"
@@ -99,6 +100,12 @@ public class GraphCoverage extends HttpServlet {
         +"</script>"
         ;
         
+=======
+        "<script src=\"https://cs.gmu.edu:8443/ldeng2/coverage/jquery-min.js\"></script>\n"
+        +"<script src=\"https://cs.gmu.edu:8443/ldeng2/coverage/springy.js\"></script>\n"
+        +"<script src=\"https://cs.gmu.edu:8443/ldeng2/coverage/springyui.js\"></script>\n";
+
+>>>>>>> origin/master
         
         String action = request.getParameter("action");
         // build hidden link

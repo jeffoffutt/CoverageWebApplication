@@ -991,7 +991,7 @@ public class Graph extends GraphBase{
 			{			
 				Path p1 = result.get(i);
 				Path p2 = resultCopy.get(j);
-				if(!p1.equals(p2) && p1.detour(p2)){
+				if(!p1.equals(p2) && p2.detour(p1)){
 					resultCopy.remove(j);
 				}
 			}
