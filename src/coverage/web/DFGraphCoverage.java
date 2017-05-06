@@ -34,6 +34,7 @@ import coverage.graph.Variable;
  * 
  * Modified by Lin Deng 05/05/2017
  * Added function for sharing a graph with URL
+ * Fixed a fault that clicking buttons with empty textboxes results in empty page
  *
  */
 
@@ -254,6 +255,13 @@ public class DFGraphCoverage extends HttpServlet{
         {
       	  //return a warning message through validating the request
       	  warning = validate(request); 
+      	if(warning != null)
+      	{
+      		out.println(printForm());
+      		out.println(printResult(warning));
+      	}
+      		
+      	else{ 
       	  //if size of edges, final nodes, and nodes of a graph is not zero, continue the following steps
            if(g.sizeOfEdges() != 0 && g.sizeOfEndingNode() != 0 && g.sizeOfNodes() != 0){
          	  //create a data flow graph
@@ -277,13 +285,20 @@ public class DFGraphCoverage extends HttpServlet{
 		        	out.println(printForm());
 		        	out.println(printResult(result));
             }
-              	
+      	} 	
         }
         //deal with DU Pairs
         else if(action.equalsIgnoreCase("DU Pairs"))
         {
       	  //return a warning message through validating the request
       	  warning = validate(request); 
+      	  
+        	if(warning != null)
+          	{
+          		out.println(printForm());
+          		out.println(printResult(warning));
+          	}
+        	else{
       	  //if size of edges, final nodes, and nodes of a graph is not zero, continue the following steps
            if(g.sizeOfEdges()!= 0 && g.sizeOfEndingNode()!= 0 && g.sizeOfNodes()!= 0){
          	  //create a data flow graph
@@ -307,12 +322,19 @@ public class DFGraphCoverage extends HttpServlet{
 		        	out.println(printForm());
 		        	out.println(printResult(result));
            }
+        	}
         }
         //deal with All Def Coverage
         else if(action.equalsIgnoreCase("All Def Coverage"))
         {
       	  //return a warning message through validating the request
       	  warning = validate(request); 
+        	if(warning != null)
+          	{
+          		out.println(printForm());
+          		out.println(printResult(warning));
+          	}
+        	else {
       	  //if size of edges, final nodes, and nodes of a graph is not zero, continue the following steps
            if(g.sizeOfEdges()!= 0 && g.sizeOfEndingNode()!= 0 && g.sizeOfNodes()!= 0){
          	  //create a data flow graph
@@ -335,13 +357,21 @@ public class DFGraphCoverage extends HttpServlet{
 		        //return html forms	
 		        out.println(printForm());
 		        out.println(printResult(result));
-           }	        	        	
+           }	
+        	}
         }
         //deal with All Use Coverage
         else if(action.equalsIgnoreCase("All Use Coverage"))
         {
       	  //return a warning message through validating the request
       	  warning = validate(request); 
+        	if(warning != null)
+          	{
+          		out.println(printForm());
+          		out.println(printResult(warning));
+          	}
+        	else
+        	{
            //if size of edges, final nodes, and nodes of a graph is not zero, continue the following steps
            if(g.sizeOfEdges()!= 0 && g.sizeOfEndingNode()!= 0 && g.sizeOfNodes()!= 0){
          	  //create a data flow graph
@@ -366,12 +396,19 @@ public class DFGraphCoverage extends HttpServlet{
 		        out.println(printForm());
 		        out.println(printResult(result));
            }
+        	}
         }
         //deal with All DU Path Coverage
         else if (action.equalsIgnoreCase("All DU Path Coverage"))
         {
       	  //return a warning message through validating the request
       	  warning = validate(request); 
+        	if(warning != null)
+          	{
+          		out.println(printForm());
+          		out.println(printResult(warning));
+          	}
+        	else {
       	  //if size of edges, final nodes, and nodes of a graph is not zero, continue the following steps
            if(g.sizeOfEdges()!= 0 && g.sizeOfEndingNode()!= 0 && g.sizeOfNodes()!= 0){
          	  //create a data flow graph
@@ -395,6 +432,7 @@ public class DFGraphCoverage extends HttpServlet{
 	        	  out.println(printForm());
 	      	  out.println(printResult(result));
            }
+        }
       	  
         }else if (action.equalsIgnoreCase("New DU Info"))
         {
