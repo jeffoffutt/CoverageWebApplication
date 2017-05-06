@@ -12,7 +12,6 @@ import javax.servlet.http.HttpServletResponse;
 
 import antlr.RecognitionException;
 import antlr.TokenStreamException;
-
 import coverage.logic.ExprLexer;
 import coverage.logic.ExprParser;
 import coverage.logic.Expression;
@@ -24,12 +23,19 @@ import coverage.logic.VarExpression;
 
 /**
  * @author wuzhi
+ * 
+ * Modified by Lin Deng 05/05/2017
+ * Added function for sharing an expression with URL
  *
  */
 public class LogicCoverage extends HttpServlet {
 	
 	static String exprStr;
 	static Logic logic;
+	
+	String hiddenLink = "https://cs.gmu.edu:8443/offutt/coverage/LogicCoverage?";
+	boolean showShareButton = false;
+	
 
 	public void doGet (HttpServletRequest request, HttpServletResponse response)
 	throws ServletException, IOException
@@ -50,8 +56,81 @@ public class LogicCoverage extends HttpServlet {
         out.println("<body bgcolor=\"#DDEEDD\">");
         out.println("<p align=\"center\"><b><font size=\"5\">Logic Coverage Web Application</font></b></p>\n");        
         
+        
+        // add js lib for graph display
+        String js =
+//        "<script src=\"jquery-min.js\"></script>\n"
+//        +"<script src=\"springy.js\"></script>\n"
+//        +"<script src=\"springyui.js\"></script>\n"
+        
+        // js code for retrieving the url
+        // and prompt to users to copy
+        "<script>"
+        +"function copyToClipboard(text) {"
+   //     +"url = window.location.href;"
+//        +"text = url + text;"
+        +"window.prompt(\"Copy to clipboard: Ctrl+C\", text);"
+        +"}"
+        +"</script>"
+        ;
+        
+        out.println(js);
+     
         String action =request.getParameter("action");
         
+        
+        // build hidden link
+        hiddenLink = "https://cs.gmu.edu:8443/offutt/coverage/LogicCoverage?";
+        showShareButton = false;
+        String expStr = request.getParameter("expression");
+        
+        
+        if (expStr!=null)
+		{
+		
+        	expStr = expStr.trim();        
+        	// only & need to replace!!!!
+        	expStr = expStr.replaceAll("\\s+","%20");
+//        	expStr = expStr.replaceAll("!","%21");
+        	expStr = expStr.replaceAll("&","%26");
+//        	expStr = expStr.replaceAll("|","%7C");
+//        	expStr = expStr.replaceAll(">","%3E");
+//        	expStr = expStr.replaceAll("^","%5E");
+//        	expStr = expStr.replaceAll("=","%3D");
+			hiddenLink = hiddenLink + "expression="+ expStr + "&";
+		}
+        
+		if(action!=null)
+		{
+			// process the whitespace in action
+			String actionStr = new String(action);
+			actionStr = actionStr.trim();
+			actionStr = actionStr.replaceAll("\\s+", "%20");
+			hiddenLink = hiddenLink + "action=" + actionStr;
+			if (!action.equals("New Graph"))
+				showShareButton = true;  // only display share button when there is an action
+		}
+		else
+		{
+			showShareButton = false;
+		}
+		
+		if (expStr != null) {
+			if (expStr.equals("") ) // if provided nothing
+			{
+				showShareButton = false;
+			}
+		}
+		
+		// if the last one is & or ?
+		// trim it out
+		
+		if(hiddenLink.charAt(hiddenLink.length()-1)=='&')
+		{
+			hiddenLink = hiddenLink.substring(0, hiddenLink.length()-1);
+		}
+        
+
         if( action ==null ||action.equalsIgnoreCase("New Expression")||action.equalsIgnoreCase("Logic Coverage"))
         {
         	exprStr=null;
@@ -200,9 +279,9 @@ public class LogicCoverage extends HttpServlet {
         out.println("<p style=\"font-size:80%;font-family:monospace\">\n");
         out.println("Companion software\n");
         out.println("<br>to <i>Introduction to Software Testing</i>, Ammann and Offutt.\n");
-        out.println("<br>Implementation by Wuzhi Xu and Nan Li.\n");
-        out.println("<br>&copy; 2007-2013, all rights reserved.\n");
-        out.println("<br>Last update: 24-April-2013</font></p>\n");
+        out.println("<br>Implementation by Wuzhi Xu, Nan Li, and Lin Deng.\n");
+        out.println("<br>&copy; 2007-2017, all rights reserved.\n");
+        out.println("<br>Last update: 05-May-2017</font></p>\n");
         out.println("</body>");
         out.println("</html>");
 	}
@@ -302,10 +381,36 @@ public class LogicCoverage extends HttpServlet {
 			+"	<input type=\"submit\" value=\"New Expression\" name=\"action\">" 
 			+"	&nbsp;<input type=\"submit\" value=\"Graph Coverage\" name=\"action\"> \n"
 			+"	&nbsp;<input type=\"submit\" value=\"Data Flow Coverage\" name=\"action\"> \n"
-			+"	&nbsp;<input type=\"submit\" value=\"Minimal-MUMCUT Coverage\" name=\"action\"></td></tr> \n"
-			+"     </table> \n"
-			+"     </form> \n";
-		
+			+"	&nbsp;<input type=\"submit\" value=\"Minimal-MUMCUT Coverage\" name=\"action\"></td></tr> \n" ;
+//			+"     </table> \n"
+//			+"     </form> \n";
+//		
+			
+			// only display the share button when an action has been submitted
+			// i.e. a graph is displayed
+			// otherwise, hide the button
+			if(showShareButton)
+			{
+				result = result
+				+"<tr>\n" ;			
+			}else
+			{
+				result = result
+				+"<tr style=\"visibility:collapse;\">\n" ;
+			}
+			
+			result = result 
+			+"  <td align=right width = \"15%\" ><b>Share Expression:</b></td>\n" 
+			+"  <td aligh=\"center\" width=\"85%\" >\n" 
+			+"	  &nbsp;<img onclick=\"javascript:copyToClipboard('"+ hiddenLink +"')\" src=\"share.png\" style=\"width:70px;height:20px;\"/>" 
+			+"  </td>\n"	
+			+"</tr>\n"
+			+"</table>\n"
+			//leave this form out and put it in the printPrimePaths()	
+			// need to leave it out for enabling infeasible paths
+			+"    </form>\n"
+		;			
+			
 		return result;
 	}
 	/**

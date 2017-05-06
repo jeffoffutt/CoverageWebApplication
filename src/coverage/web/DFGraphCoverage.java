@@ -28,6 +28,12 @@ import coverage.graph.Variable;
  * 
  * Modified by Nan Li
  * Date: Feb, 2009
+ * 
+ * Modified by Lin Deng to add JS support
+ * Date: Mar, 2016
+ * 
+ * Modified by Lin Deng 05/05/2017
+ * Added function for sharing a graph with URL
  *
  */
 
@@ -48,6 +54,9 @@ public class DFGraphCoverage extends HttpServlet{
 	static String title;
 	
 	
+	String hiddenLink = "https://cs.gmu.edu:8443/offutt/coverage/DFGraphCoverage?";
+	boolean showShareButton = false;
+	
 	
 	public void doGet (HttpServletRequest request, HttpServletResponse response)
 	throws ServletException, IOException
@@ -60,7 +69,7 @@ public class DFGraphCoverage extends HttpServlet{
 	{
         response.setContentType("text/html");
         PrintWriter out = response.getWriter();
-        
+      
         out.println("<html>");
         out.println("<head>");
         out.println("<title>Data Flow Graph Coverage</title>");
@@ -69,8 +78,161 @@ public class DFGraphCoverage extends HttpServlet{
         out.println("<p align=\"center\">");
         out.println("  <b><font size=\"5\">Data Flow Graph Coverage Web Application</font></b>");
         out.println("</p>\n");
+       
+        
+        
+        // add js lib for graph display
+        String js =
+        "<script src=\"jquery-min.js\"></script>\n"
+        +"<script src=\"springy.js\"></script>\n"
+        +"<script src=\"springyui.js\"></script>\n"
+        
+        // js code for retrieving the url
+        // and prompt to users to copy
+        +"<script>"
+        +"function copyToClipboard(text) {"
+   //     +"url = window.location.href;"
+//        +"text = url + text;"
+        +"window.prompt(\"Copy to clipboard: Ctrl+C\", text);"
+        +"}"
+        +"</script>"
+        ;
+                
+        out.println(js);
+        
         String action =request.getParameter("action");
 
+///////////////////////////////////////////////////////////////////
+        ///////////////////////////////////////////////////////////
+
+        // build hidden link
+        hiddenLink = "https://cs.gmu.edu:8443/offutt/coverage/DFGraphCoverage?";
+        showShareButton = false;
+        String initialNodeStr = request.getParameter("initialNode");
+		String edgesStr = request.getParameter("edges");
+		String endNodeStr = request.getParameter("endNode");
+		
+		String defsStr = request.getParameter("defs");
+		String usesStr = request.getParameter("uses");
+		
+		// process edgesStr
+		// edges=1+2%0D%0A1+3%0D%0A2+4%0D%0A3+4%0D%0A3+5%0D%0A4+5%0D%0A
+
+		String edgesLink = "";
+		
+		// construct the link
+		if(edgesStr!=null)
+		{
+			// split edges
+			String[] lines = edgesStr.split("\\r?\\n");		
+        
+			for(String str : lines)
+			{
+				// little verification??
+				
+				// replace white space to +
+				str = str.trim();
+				str = str.replaceAll("\\s+","+");
+				edgesLink = edgesLink + str +"%0D%0A";
+			}
+			hiddenLink = hiddenLink + "edges="+ edgesLink + "&";
+		}
+		
+//		initialNode=1&endNode=5&action=Edges
+		if (initialNodeStr!=null)
+		{
+			// if more than one
+			// add +
+			initialNodeStr = initialNodeStr.trim();
+			initialNodeStr = initialNodeStr.replaceAll("\\s+","+");
+			
+			hiddenLink = hiddenLink + "initialNode="+ initialNodeStr + "&";
+		}
+		
+		if (endNodeStr!=null)
+		{
+			// if more than one
+			// add +
+			endNodeStr = endNodeStr.trim();
+			endNodeStr = endNodeStr.replaceAll("\\s+","+");
+			hiddenLink = hiddenLink + "endNode="+ endNodeStr + "&";
+		}
+		
+		
+		String defsLink = "";
+		if (defsStr != null)
+		{
+			// split defs
+			String[] lines = defsStr.split("\\r?\\n");
+			for(String str : lines)
+			{
+				// little verification??
+				
+				// replace white space to +
+				str = str.trim();
+				str = str.replaceAll("\\s+","%20");
+				defsLink = defsLink + str +"%0D%0A";
+			}
+			hiddenLink = hiddenLink + "defs="+ defsLink + "&";
+			
+		}
+		String usesLink = "";
+		if (usesStr != null)
+		{
+			// split uses
+			String[] lines = usesStr.split("\\r?\\n");
+			for(String str : lines)
+			{
+				// little verification??
+				
+				// replace white space to +
+				str = str.trim();
+				str = str.replaceAll("\\s+","%20");
+				usesLink = usesLink + str +"%0D%0A";
+			}
+			hiddenLink = hiddenLink + "uses="+ usesLink + "&";
+		}
+		
+		if(action!=null)
+		{
+			// process the whitespace in action
+			String actionStr = new String(action);
+			actionStr = actionStr.trim();
+			actionStr = actionStr.replaceAll("\\s+", "%20");
+			hiddenLink = hiddenLink + "action=" + actionStr;
+			if (!action.equals("New Graph"))
+				showShareButton = true;  // only display share button when there is an action
+		}
+		else
+		{
+			showShareButton = false;
+		}
+		
+		if (initialNodeStr != null && endNodeStr != null && edgesStr != null
+			&& defsStr != null && usesStr != null) {
+			if (initialNodeStr.equals("") && endNodeStr.equals("")
+					&& edgesStr.equals("") && defsStr.equals("") && usesStr.equals("") ) // if provided nothing
+			{
+				showShareButton = false;
+			}
+		}
+		
+		// if the last one is & or ?
+		// trim it out
+		
+		if(hiddenLink.charAt(hiddenLink.length()-1)=='&')
+		{
+			hiddenLink = hiddenLink.substring(0, hiddenLink.length()-1);
+		}
+		
+        
+
+        
+        
+  ///////////////////////////////////////////////////////////////      
+  ///////////////////////////////////////////////////////////////      
+        
+        
         if(action ==null || action.equalsIgnoreCase("New Graph")|| action.equalsIgnoreCase("Data Flow Coverage"))
         {
         	//initialize all variables
@@ -237,7 +399,8 @@ public class DFGraphCoverage extends HttpServlet{
         }else if (action.equalsIgnoreCase("New DU Info"))
         {
         	//reset all global variables
-        	dfg.removeVariables();
+        	if(dfg!=null)
+        		dfg.removeVariables();
         	defs = null;
         	uses = null;
         	warning = null;
@@ -265,9 +428,9 @@ public class DFGraphCoverage extends HttpServlet{
         out.println("<p style=\"font-size:80%;font-family:monospace\">");
         out.println("Companion software");
         out.println("<br>to <i>Introduction to Software Testing</i>, Ammann and Offutt.");
-        out.println("<br>Implementation by Wuzhi Xu and Nan Li.");
-        out.println("<br>&copy; 2007-2013, all rights reserved.");
-        out.println("<br>Last update: 24-April-2013");
+        out.println("<br>Implementation by Wuzhi Xu, Nan Li, Lin Deng, and Scott Brown.");
+        out.println("<br>&copy; 2007-2017, all rights reserved.");
+        out.println("<br>Last update: 05-May-2017");
         out.println("</font>");
         out.println("</p>");
         out.println("</body>");
@@ -506,40 +669,81 @@ public class DFGraphCoverage extends HttpServlet{
 	 */
 	private String printResult(String msg)
 	{
-		String result = "<table id = \"tableResult\" border=\"0\" width=\"100%\" cellspacing=\"0\" cellpadding=\"0\">\n"
-		+ "<tr>\n" + "  <td width=\"50%\"  valign=\"top\">\n" + msg + "  </td>\n"
-		+ "  <td width=\"50%\" valign=\"top\">\n" 
-		+ "    <font face=\"Garamond\">Node color:\n"
-		+ "     <font color=\"gray\">Initial Node</font>,\n"
-		+ "     <font color=\"black\">Ending Node</font>, \n"
-		+ "     <font color=\"blue\">Passed Node</font>, \n"
-		+ "     <font color=\"red\">Unpassed Node</font>\n"
-		+ "    </font><br> \n"
-		//a table displaying the applet
-		+ "    <table border=\"1\" cellspacing=\"0\" cellpadding=\"0\" bgcolor=\"#EEFFEE\">\n"
-		+ "    <tr><td>\n" 
-		+ "      <applet code=\"coverage.applet.GraphApplet\"\n"
-		+ "              archive=\"lib/graph.jar,lib/jung.jar,lib/colt.jar,lib/commons-collections.jar\"\n"
-		+ "              width=\"500\" height=\"500\">\n";
-		//get the paths of a specific coverage and the title for the applet
-		if(appletPaths != null)
+		// get all edges
+		List<Path> edgePaths = g.findEdges();
+		// System.out.println(edgePaths);
+		// process edges to generate a graph
+		Iterator nodeItr = g.getNodeIterator();
+		String nodeStr = "";
+		String edgeStr = "";
+		// produce strings used for JS
+		while(nodeItr.hasNext())
 		{
-			result += "           <param name=\"path\" value=\"" + GraphUtil.outputPath(appletPaths) + "\">\n"
-			+ "           <param name=\"title\" value=\"" + title + "\">\n";
+			//System.out.println(nodeItr.next());
+			Node node = (Node) nodeItr.next();
+			nodeStr += "var node"+ node +" = graph.newNode({label: '"+node;
+			if(g.isInitialNode(node))  // initial to be brown
+			{
+				nodeStr +="', color: '#FFCC00', font: 'italic bolder 16px Verdana, sans-serif'});\n";
+			}
+			else if(g.isEndingNode(node))  // end to be blue
+			{
+				nodeStr +="', color: '#CC00FF', font: 'italic bolder 16px Verdana, sans-serif'});\n";
+			}
+			else // normal node t obe black
+			{
+				nodeStr +="'});\n";
+			}
 		}
-		//get the variables and the graph for the applet
-		result += "           <param name=\"variables\" value=\"" + GraphUtil.outputVariables(dfg) + "\">\n " 
-		+"          <param name=\"graph\" value=\""+ GraphUtil.outputGraph(dfg) + "\">\n"
-	
-		+"      </applet>\n"
-		+"    </td></tr>\n"
-		+"    </table>\n"
-		+"  </td>\n"
-		+"</tr>\n"
-		+"</table>\n";
+				
+		for(Path edge : edgePaths)
+		{
+//			System.out.println(edge);
+			edgeStr += "graph.newEdge( node"+edge.get(0)+", node"+edge.get(1)+");\n";
+			
+		}
+		
+		
+		
+		
+		String result = "<table id = \"tableResult\" border=\"0\" width=\"100%\" cellspacing=\"0\" cellpadding=\"0\">\n"
+		+"  <tr><td width=\"50%\"  valign=\"top\">" + msg + "</td>\n"
+		+"    <td width=\"50%\" valign=\"top\">" ;
+//		+"<font face=\"Garamond\">Node color: <font color=gray>Initial Node</font>,\n"
+//		+"<font color=black>Ending Node</font>, \n"
+//		+"<font color=blue>Passed Node</font>, \n"
+//		+"<font color=red>Unpassed Node</font></font><br> \n"
+
+		if(g.sizeOfNodes()>0){
+		result += "<script>"
+		        +"var graph = new Springy.Graph();\n"
+		        +nodeStr
+		        +edgeStr;
+		           
+		        // function
+		        
+		       result += " jQuery(function(){"
+		      +"var springy = window.springy = jQuery('#springydemo').springy({"
+		        +"graph: graph,"
+		        +"nodeSelected: function(node){"
+		        +"console.log('Node selected: ' + JSON.stringify(node.data));}"
+		        +"   });"
+		        +"  });"
+		      +"  </script>\n";
+			
+				
+				result += "<div>\n"; 
+				result += "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"
+						+ "Node color: <font color=\"#FFCC00\">Initial Node</font>, <font color=\"#CC00FF\">Final Node</font><br>\n";
+				result += "<canvas id=\"springydemo\" width=\"500\" height=\"400\" />\n";
+				result += "</div>\n"
+						+"</td></tr>\n";
+		}
+
+		result+="</table>\n";
+
 		
 		return result;
-
 	}
 	/**
 	 * 
@@ -622,10 +826,38 @@ public class DFGraphCoverage extends HttpServlet{
 			+"		&nbsp;<INPUT type=submit name=\"action\" value=\"Logic Coverage\"> " 
 			+"		&nbsp;<INPUT type=submit name=\"action\" value=\"Minimal-MUMCUT Coverage\"> "
 			+"		 </TD></TR>\n"
-			+"		<tr><td></tr> <tr><td></tr>"
-			+"		&nbsp;"
-			+"		</tbody></table> \n"
-			+"</FORM> \n";
+			+"		<tr><td></tr> <tr><td></tr>";
+//			+"		&nbsp;"
+//			+"		</tbody></table> \n"
+//			+"</FORM> \n";
+		
+		// only display the share button when an action has been submitted
+		// i.e. a graph is displayed
+		// otherwise, hide the button
+		if(showShareButton)
+		{
+			form = form
+			+"<tr>\n" ;			
+		}else
+		{
+			form = form
+			+"<tr style=\"visibility:collapse;\">\n" ;
+		}
+		
+		form = form 
+		+"  <td align=right width = \"15%\" ><b>Share Data Flow Graph:</b></td>\n" 
+		+"  <td aligh=\"center\" width=\"85%\" >\n" 
+		+"	  &nbsp;<img onclick=\"javascript:copyToClipboard('"+ hiddenLink +"')\" src=\"share.png\" style=\"width:70px;height:20px;\"/>" 
+		+"  </td>\n"	
+		+"</tr>\n"
+		+"</table>\n"
+		//leave this form out and put it in the printPrimePaths()	
+		// need to leave it out for enabling infeasible paths
+		+"    </form>\n"
+	;
+		
+		
+		
 		
 		return form;
 	}

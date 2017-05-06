@@ -190,8 +190,8 @@ public class GraphCoverage extends HttpServlet {
 			hiddenLink = hiddenLink.substring(0, hiddenLink.length()-1);
 		}
 		
-		
-		
+//////////////////////////////////////////////////////////////		
+//////////////////////////////////////////////////////////////		
         String algorithm2Action = null;
         if(action == null)
         	algorithm2Action = request.getParameter("algorithm2");
