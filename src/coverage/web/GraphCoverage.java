@@ -17,6 +17,7 @@ import coverage.graph.GraphUtil;
 import coverage.graph.InvalidGraphException;
 import coverage.graph.Node;
 import coverage.graph.Path;
+import coverage.graph.utility.HiddenLinkUtility;
 
 
 /**
@@ -69,125 +70,78 @@ public class GraphCoverage extends HttpServlet {
 		doPost(request, response);
 	}
 	
+	private String getHeader()
+	{
+	    return    "<html>\n"
+	            + "<head>\n"
+	            + "<title>Graph Coverage</title>\n"
+	            + "</head>\n"
+	            + "<body bgcolor=\"#DDEEDD\">\n"
+	            + "<p style=\"text-align:center;font-size:150%;font-weight:bold\">Graph Coverage Web Application</p>\n"
+	            +           
+	            // add js lib for graph display
+	            "<script src=\"jquery-min.js\"></script>\n"
+	            +"<script src=\"springy.js\"></script>\n"
+	            +"<script src=\"springyui.js\"></script>\n"	            
+	            // js code for retrieving the url
+	            // and prompt to users to copy
+	            +"<script>"
+	            +"function copyToClipboard(text) {"
+	            //     +"url = window.location.href;"
+                //	   +"text = url + text;"
+	            +"window.prompt(\"Copy to clipboard: Ctrl+C\", text);"
+	            +"}"
+	            +"</script>";
+	}
+	
 	public void doPost (HttpServletRequest request, HttpServletResponse response)
 	throws ServletException, IOException
 	{
         response.setContentType("text/html");
         PrintWriter out = response.getWriter();
-        String result = "<html>\n"
-        + "<head>\n"
-        + "<title>Graph Coverage</title>\n"
-        + "</head>\n"
-        + "<body bgcolor=\"#DDEEDD\">\n"
-        + "<p style=\"text-align:center;font-size:150%;font-weight:bold\">Graph Coverage Web Application</p>\n";
+        String result = this.getHeader();        
         
-        
-        // add js lib for graph display
-        result +=
-        "<script src=\"jquery-min.js\"></script>\n"
-        +"<script src=\"springy.js\"></script>\n"
-        +"<script src=\"springyui.js\"></script>\n"
-        
-        // js code for retrieving the url
-        // and prompt to users to copy
-        +"<script>"
-        +"function copyToClipboard(text) {"
-   //     +"url = window.location.href;"
-//        +"text = url + text;"
-        +"window.prompt(\"Copy to clipboard: Ctrl+C\", text);"
-        +"}"
-        +"</script>"
-        ;
-        
-        
-        String action = request.getParameter("action");
-        // build hidden link
-        hiddenLink = "https://cs.gmu.edu:8443/offutt/coverage/GraphCoverage?";
+       
         showShareButton = false;
-        String initialNodeStr = request.getParameter("initialNode");
-		String edgesStr = request.getParameter("edges");
-		String endNodeStr = request.getParameter("endNode");
-        
-		// process edgesStr
-		// edges=1+2%0D%0A1+3%0D%0A2+4%0D%0A3+4%0D%0A3+5%0D%0A4+5%0D%0A
 
-		String edgesLink = "";
+        String action         = request.getParameter("action");
+        String initialNodeStr = request.getParameter("initialNode");
+		String edgesStr       = request.getParameter("edges");
+		String endNodeStr     = request.getParameter("endNode");
 		
-		// construct the link
-		if(edgesStr!=null)
-		{
-			// split edges
-			String[] lines = edgesStr.split("\\r?\\n");		
+		 // build hidden link
+        hiddenLink = HiddenLinkUtility.BuildHiddenLink(edgesStr,
+                                                       initialNodeStr, 
+                                                       endNodeStr, 
+                                                       action,
+                                                       request.getParameter("algorithm2")!= null ? request.getParameter("algorithm2")
+                                                                                                 : null);
         
-			for(String str : lines)
-			{
-				// little verification??
-				
-				// replace white space to +
-				str = str.trim();
-				str = str.replaceAll("\\s+","+");
-				edgesLink = edgesLink + str +"%0D%0A";
-			}
-			hiddenLink = hiddenLink + "edges="+ edgesLink + "&";
-		}
-		
-//		initialNode=1&endNode=5&action=Edges
-		if (initialNodeStr!=null)
-		{
-			// if more than one
-			// add +
-			initialNodeStr = initialNodeStr.trim();
-			initialNodeStr = initialNodeStr.replaceAll("\\s+","+");
-			
-			hiddenLink = hiddenLink + "initialNode="+ initialNodeStr + "&";
-		}
-		
-		if (endNodeStr!=null)
-		{
-			// if more than one
-			// add +
-			endNodeStr = endNodeStr.trim();
-			endNodeStr = endNodeStr.replaceAll("\\s+","+");
-			hiddenLink = hiddenLink + "endNode="+ endNodeStr + "&";
-		}
 		
 		if(action!=null)
 		{
-			// process the whitespace in action
-			String actionStr = new String(action);
-			actionStr = actionStr.trim();
-			actionStr = actionStr.replaceAll("\\s+", "%20");
-			hiddenLink = hiddenLink + "action=" + actionStr;
 			if (!action.equals("New Graph"))
 				showShareButton = true;  // only display share button when there is an action
 		}
 		else if(request.getParameter("algorithm2")!=null) // specific for new algos
 		{
-			String algorithm2ActionStr = request.getParameter("algorithm2");
-			algorithm2ActionStr = algorithm2ActionStr.trim();
-			algorithm2ActionStr = algorithm2ActionStr.replaceAll("\\s+", "%20");
-			hiddenLink = hiddenLink + "algorithm2=" + algorithm2ActionStr;
-			showShareButton = true;  // only display share button when there is an action
+	    	showShareButton = true;  // only display share button when there is an action
 		}
 		else
 		{
 			showShareButton = false;
 		}
 		
-		if (initialNodeStr != null && endNodeStr != null && edgesStr != null) {
-			if (initialNodeStr.equals("") && endNodeStr.equals("")
-					&& edgesStr.equals("")) // if provided nothing
+		if (initialNodeStr != null && 
+		    endNodeStr     != null && 
+		    edgesStr       != null) 
+		{
+			if (initialNodeStr.equals("") && 
+			    endNodeStr    .equals("") && 
+			    edgesStr      .equals("")) // if provided nothing
 			{
 				showShareButton = false;
 			}
-		}
-		
-		// if the last one is & or ?
-		// trim it out
-		
-		if(hiddenLink.charAt(hiddenLink.length()-1)=='&')
-		{
-			hiddenLink = hiddenLink.substring(0, hiddenLink.length()-1);
 		}
 		
 //////////////////////////////////////////////////////////////		
