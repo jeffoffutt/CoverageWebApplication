@@ -14,6 +14,47 @@ public class HiddenLinkUtility
     
     public static final String GRAPH_COVERAGE_LINK = "https://cs.gmu.edu:8443/offutt/coverage/GraphCoverage?";
     
+    /**
+     * https://cs.gmu.edu:8443/offutt/coverage/GraphCoverage?
+     * edges=1+2%0D%0A2+3%0D%0A1+3%0D%0A3+4%0D%0A3+5%0D%0A&
+     * initialNode=1&
+     * endNode=5&
+     * action=Nodes
+     * 
+     * 
+     * https://cs.gmu.edu:8443/offutt/coverage/GraphCoverage?
+     * edges=1+2%0D%0A2+3%0D%0A1+3%0D%0A3+4%0D%0A3+5%0D%0A&
+     * initialNode=1&
+     * endNode=5&
+     * algorithm2=Edge-Pair%20Coverage
+     * 
+     * https://cs.gmu.edu:8443/offutt/coverage/GraphCoverage?
+     * edges=1+2%0D%0A2+3%0D%0A1+3%0D%0A3+4%0D%0A3+5%0D%0A&
+     * initialNode=1+2+3&
+     * endNode=5+4&
+     * algorithm2=Edge-Pair%20Coverage
+     * 
+     *no edges
+     *https://cs.gmu.edu:8443/offutt/coverage/GraphCoverage?
+     *edges=&
+     *initialNode=1+2+3&
+     *endNode=5+4&
+     *action=Nodes
+     * 
+     * empty
+     * https://cs.gmu.edu:8443/offutt/coverage/GraphCoverage?
+     * edges=&
+     * initialNode=&
+     * endNode=&
+     * action=Edges
+     * 
+     * @param edgesString
+     * @param initialNodeString
+     * @param endNodeString
+     * @param actionString
+     * @param algorithm2String
+     * @return
+     */
     public static String BuildHiddenLink(String edgesString, 
                                          String initialNodeString,
                                          String endNodeString,
@@ -83,7 +124,7 @@ public class HiddenLinkUtility
             initalNodeString = initalNodeString.trim();
             initalNodeString = initalNodeString.replaceAll("\\s+","+");
             
-            initialNodeLink = "initialNode="+ initialNodeLink + "&";
+            initialNodeLink = "initialNode="+ initalNodeString + "&";
         }
         
         return initialNodeLink;
