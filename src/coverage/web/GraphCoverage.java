@@ -18,6 +18,9 @@ import coverage.graph.InvalidGraphException;
 import coverage.graph.Node;
 import coverage.graph.Path;
 import coverage.graph.utility.HiddenLinkUtility;
+import coverage.web.enums.OtherTools;
+import coverage.web.enums.TestPaths;
+import coverage.web.enums.TestRequirements;
 
 
 /**
@@ -150,11 +153,12 @@ public class GraphCoverage extends HttpServlet {
         if(action == null)
         	algorithm2Action = request.getParameter("algorithm2");
         
-        if(algorithm2Action != null){
-        	if (action == null && algorithm2Action.equalsIgnoreCase("Edge Coverage"))
+        if(algorithm2Action != null)
+        {
+        	if (action == null && algorithm2Action.equalsIgnoreCase(TestPaths.EdgeCoverage.toString()))
             {
             	String warning = validate(request);
-            	title = "Edge Coverage";
+            	title = TestPaths.EdgeCoverage.toString();
             	if(warning != null)
             	{
 	        		// if any of inputs contain invalid characters
@@ -220,10 +224,10 @@ public class GraphCoverage extends HttpServlet {
 					result+=printResult(printPaths(paths, null, title));
             	} 
             }
-        	 else if (action == null && algorithm2Action.equalsIgnoreCase("Edge-Pair Coverage"))
+        	 else if (action == null && algorithm2Action.equalsIgnoreCase(TestPaths.EdgePairCoverage.toString()))
              {
                	String warning = validate(request);
-               	title = "Edge-Pair Coverage using the prefix graph algorithm";
+               	title = String.format("%s using the prefix graph algorithm", TestPaths.EdgePairCoverage.toString());
                	if(warning != null)
                	{
 	        		// if any of inputs contain invalid characters
@@ -298,7 +302,7 @@ public class GraphCoverage extends HttpServlet {
        				}
                	} 
                }
-        	 else if (action == null && algorithm2Action.equalsIgnoreCase("Prime Path Coverage"))
+        	 else if (action == null && algorithm2Action.equalsIgnoreCase(TestPaths.PrimePathCoverage.toString()))
              {      	  
            		String warning = validate(request);
 				if (warning != null) {
@@ -315,7 +319,7 @@ public class GraphCoverage extends HttpServlet {
 					result += printResult(warning);
 				} else
 				{
-					title = "Prime Path Coverage using the prefix graph algorithm";
+					title = String.format("%s using the prefix graph algorithm", TestPaths.PrimePathCoverage.toString());
 					List<Path> primePaths = new ArrayList<Path>();
 					primePaths = g.findPrimePaths();
 					
@@ -391,8 +395,9 @@ public class GraphCoverage extends HttpServlet {
 				}
              }//end else if for test
         }
-        else{
-	        if( action == null ||action.equalsIgnoreCase("New Graph")||action.equalsIgnoreCase("Graph Coverage"))
+        else
+        {
+	        if( action == null ||action.equalsIgnoreCase(OtherTools.NewGraph.toString())||action.equalsIgnoreCase("Graph Coverage"))
 	        {
 	        	g = new Graph();
 	        	edges = null;
@@ -403,20 +408,20 @@ public class GraphCoverage extends HttpServlet {
 	        	infeasiblePrimePaths = "";
 	        	infeasibleEdgePairs = "";
 	        	result += printEdgeForm("", "", "");
-	        }else if(action.equalsIgnoreCase("Data Flow Coverage"))
+	        }else if(action.equalsIgnoreCase(OtherTools.DataFlowCoverage.toString()))
 	        {  
 	            	response.sendRedirect("DFGraphCoverage");
 	        }
-	        else if(action.equalsIgnoreCase("Logic Coverage")){
+	        else if(action.equalsIgnoreCase(OtherTools.LogicCoverage.toString())){
 	      	 // RequestDispatcher dispatcher=request.getRequestDispatcher("LogicCoverage");
 	      	 
 	      	  response.sendRedirect("LogicCoverage");
 	        }
-	        else if (action.equalsIgnoreCase("Minimal-MUMCUT Coverage"))
+	        else if (action.equalsIgnoreCase(OtherTools.MinimalMUMCUTCoverage.toString()))
 	        {
 	      	  response.sendRedirect("MinimalMUMCUTCoverage");
 	        }
-	        else if(action.equalsIgnoreCase("Prime Paths"))
+	        else if(action.equalsIgnoreCase(TestRequirements.PrimePaths.toString()))
 	        {   
 	      	  long start = System.nanoTime();
 	        	String warning = validate(request);
@@ -435,7 +440,7 @@ public class GraphCoverage extends HttpServlet {
 
 				} else {
 
-					title = "Prime Paths";
+					title = TestRequirements.PrimePaths.toString();
 					paths = g.findPrimePaths();
 					result += printEdgeForm(edges, initialNode, endNode);
 
@@ -512,7 +517,7 @@ public class GraphCoverage extends HttpServlet {
 	        		}//end else */
 	              	
 	        }
-	        else if(action.equalsIgnoreCase("Simple Paths"))
+	        else if(action.equalsIgnoreCase(TestRequirements.SimplePaths.toString()))
 	        {
 	        	String warning = validate(request);
 				if (warning != null) {
@@ -534,7 +539,7 @@ public class GraphCoverage extends HttpServlet {
 	    		result += printEdgeForm(edges, initialNode, endNode);
 	    		result += printResult(printRequirements(paths, warning, title));
 				}	        	
-	        }else if(action.equalsIgnoreCase("Nodes"))
+	        }else if(action.equalsIgnoreCase(TestRequirements.Nodes.toString()))
 	        {
 	      	  	String warning = validate(request);
 				if (warning != null) {
@@ -551,13 +556,13 @@ public class GraphCoverage extends HttpServlet {
 					result += printResult(warning);
 
 				} else {
-	      	  	title = "Nodes";
+	      	  	title = TestRequirements.Nodes.toString();
 	      		paths = g.findNodes();
 	      		result += printEdgeForm(edges, initialNode, endNode);
 	      		result += printResult(printRequirements(paths, warning, title));
 				}
 	        }
-	        else if(action.equalsIgnoreCase("Edges"))
+	        else if(action.equalsIgnoreCase(TestRequirements.Edges.toString()))
 	        {
 	      	  String warning = validate(request);
 				if (warning != null) {
@@ -574,13 +579,13 @@ public class GraphCoverage extends HttpServlet {
 					result += printResult(warning);
 
 				} else {
-	          	title = "Edges";
+	          	title = TestRequirements.Edges.toString();
 	      		paths = g.findEdges();
 	      		result += printEdgeForm(edges, initialNode, endNode);
 	      		result += printResult(printRequirements(paths, warning, title));
 				}
 	        }
-	        else if(action.equalsIgnoreCase("Edge-Pair"))
+	        else if(action.equalsIgnoreCase(TestRequirements.EdgePair.toString()))
 	        {
 	      	  String warning = validate(request);
 				if (warning != null) {
@@ -597,7 +602,7 @@ public class GraphCoverage extends HttpServlet {
 					result += printResult(warning);
 
 				} else {
-	          	title = "Edge-Pairs";
+	          	title = TestRequirements.EdgePair.toString();
 	      		paths = g.findEdgePairs();
 	      		result += printEdgeForm(edges, initialNode, endNode);
 	      		if(infeasibleEdgePairs == null)
@@ -605,11 +610,11 @@ public class GraphCoverage extends HttpServlet {
 	      		result += printResult(printEdgePairs(paths, warning, title));
 				}
 	        }
-	        else if(action.equalsIgnoreCase("Node Coverage"))
+	        else if(action.equalsIgnoreCase(TestPaths.NodeCoverage.toString()))
 	        {
 	        	
 	        	String warning = validate(request);
-	        	title = "Node Coverage";
+	        	title = TestPaths.NodeCoverage.toString();
 	        	if(warning!=null)
 	        	{
 	        		// if any of inputs contain invalid characters
@@ -636,10 +641,10 @@ public class GraphCoverage extends HttpServlet {
 		        		result+=printResult(warning);
 					}
 	        	}        	
-	        }else if (action.equalsIgnoreCase("Edge Coverage"))
+	        }else if (action.equalsIgnoreCase(TestPaths.EdgeCoverage.toString()))
 	        {
 	        	String warning = validate(request);
-	        	title = "Edge Coverage";
+	        	title = TestPaths.EdgeCoverage.toString();
 				if (warning != null) {
 					// if any of inputs contain invalid characters
 					// clear it
@@ -665,10 +670,10 @@ public class GraphCoverage extends HttpServlet {
 					}
 	        	} 
 	        }
-	        else if (action.equalsIgnoreCase("Edge-Pair Coverage"))
+	        else if (action.equalsIgnoreCase(TestPaths.EdgePairCoverage.toString()))
 	        {
 	          	String warning = validate(request);
-	          	title = "Edge-Pair Coverage";
+	          	title = TestPaths.EdgePairCoverage.toString();
 				if (warning != null) {
 					// if any of inputs contain invalid characters
 					// clear it
@@ -703,11 +708,11 @@ public class GraphCoverage extends HttpServlet {
 	          	} 
 	          }
 	       
-	        else if (action.equalsIgnoreCase("Prime Path Coverage"))
+	        else if (action.equalsIgnoreCase(TestPaths.PrimePathCoverage.toString()))
 	        {
 	      	  
 	        		String warning = validate(request);
-	        		title = "Prime Path Coverage";
+	        		title = TestPaths.PrimePathCoverage.toString();
 					if (warning != null) {
 						// if any of inputs contain invalid characters
 						// clear it
