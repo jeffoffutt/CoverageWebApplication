@@ -2,16 +2,23 @@ package coverage.web.enums;
 
 public enum OtherTools
 {
-    NewGraph("New Graph"),
-    DataFlowCoverage("Data Flow Coverage"),
-    LogicCoverage("Logic Coverage"),
-    MinimalMUMCUTCoverage("Minimal-MUMCUT Coverage");
+    NewGraph("New Graph", null),
+    DataFlowCoverage("Data Flow Coverage", "DFGraphCoverage"),
+    LogicCoverage("Logic Coverage", "LogicCoverage"),
+    MinimalMUMCUTCoverage("Minimal-MUMCUT Coverage", "MinimalMUMCUTCoverage");
     
     String buttonName;
-    OtherTools(String name)
+    String redirect;
+    OtherTools(String name, String redirect)
     {
         this.buttonName = name;
+        this.redirect = redirect;
     }    
+    
+    public String getRedirect()
+    {
+        return this.redirect;
+    }
     
     @Override
     public String toString()
