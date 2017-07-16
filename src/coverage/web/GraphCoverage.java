@@ -96,14 +96,17 @@ public class GraphCoverage extends HttpServlet
 
         showShareButton = false;
 
-        String action = request.getParameter("action");
+        String action         = request.getParameter("action");
         String initialNodeStr = request.getParameter("initialNode");
-        String edgesStr = request.getParameter("edges");
-        String endNodeStr = request.getParameter("endNode");
+        String edgesStr       = request.getParameter("edges");
+        String endNodeStr     = request.getParameter("endNode");
 
         // build hidden link
-        hiddenLink = HiddenLinkUtility.BuildHiddenLink(edgesStr, initialNodeStr, endNodeStr, action,
-                request.getParameter("algorithm2") != null ? request.getParameter("algorithm2") : null);
+        hiddenLink = HiddenLinkUtility.BuildHiddenLink(edgesStr, 
+        											   initialNodeStr,
+        											   endNodeStr,
+        											   action,
+        											   request.getParameter("algorithm2") != null ? request.getParameter("algorithm2") : null);
 
         if(action != null)
         {
