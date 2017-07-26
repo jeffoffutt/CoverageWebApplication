@@ -1,8 +1,11 @@
 package coverage.web;
 
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -12,12 +15,24 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.fileupload.FileItem;
+import org.apache.commons.fileupload.FileItemFactory;
+import org.apache.commons.fileupload.FileUploadException;
+import org.apache.commons.fileupload.disk.DiskFileItemFactory;
+import org.apache.commons.fileupload.servlet.ServletFileUpload;
+
+import com.drgarbage.asm.render.intf.IMethodSection;
+import com.drgarbage.bytecode.instructions.AbstractInstruction;
+import com.drgarbage.controlflowgraph.ControlFlowGraphException;
+
 import coverage.graph.Graph;
 import coverage.graph.GraphUtil;
 import coverage.graph.InvalidGraphException;
 import coverage.graph.Node;
 import coverage.graph.Path;
 import coverage.graph.utility.HiddenLinkUtility;
+import coverage.web.controlflow.diagram.ClassFile;
+import coverage.web.controlflow.diagram.ControlFlowDiagramGraphFactory;
 import coverage.web.enums.OtherTools;
 import coverage.web.enums.TestPaths;
 import coverage.web.enums.TestRequirements;
@@ -36,6 +51,8 @@ import coverage.web.enums.TestRequirements;
  * 
  *         Modified by Lin Deng 02/22/2017 Added function for sharing a graph
  *         with URL
+ *         
+ *         Modified by Jenifer Cochran
  * 
  */
 public class GraphCoverage extends HttpServlet
@@ -47,6 +64,7 @@ public class GraphCoverage extends HttpServlet
     static String title;
     static String initialNode;
     static String endNode;
+    static List<String> methodsList;
     // numbers of infeasible prime paths
     static String infeasiblePrimePaths;
     // number of infeasible edge-pairs
@@ -96,10 +114,11 @@ public class GraphCoverage extends HttpServlet
 
         showShareButton = false;
 
-        String action         = request.getParameter("action");
-        String initialNodeStr = request.getParameter("initialNode");
-        String edgesStr       = request.getParameter("edges");
-        String endNodeStr     = request.getParameter("endNode");
+        String action           = request.getParameter("action");
+        String initialNodeStr   = request.getParameter("initialNode");
+        String edgesStr         = request.getParameter("edges");
+        String endNodeStr       = request.getParameter("endNode");
+        String importJavaAction = request.getParameter("importJavaFile");
 
         // build hidden link
         hiddenLink = HiddenLinkUtility.BuildHiddenLink(edgesStr, 
@@ -107,6 +126,11 @@ public class GraphCoverage extends HttpServlet
         											   endNodeStr,
         											   action,
         											   request.getParameter("algorithm2") != null ? request.getParameter("algorithm2") : null);
+        
+       if(importJavaAction != null)
+       {
+           result += ExecuteImportJavaFile(request);
+       }
 
         if(action != null)
         {
@@ -216,7 +240,7 @@ public class GraphCoverage extends HttpServlet
                 Graph bipartite = GraphUtil.getBipartiteGraph(prefix, initialNode, endNode);
                 paths = bipartite.findMinimumPrimePathCoverageViaPrefixGraph(g.findPrimePaths());
 
-                result += printEdgeForm(edges, initialNode, endNode);
+                result += printEdgeForm(edges, initialNode, endNode, methodsList);
                 result += printResult(printRequirements(paths, warning, title));
             } // end else if for test
               // for anything else, send it back to the page
@@ -228,11 +252,50 @@ public class GraphCoverage extends HttpServlet
 
         result += "<p style=\"font-size:80%;font-family:monospace\">\n" + "Companion software\n"
                 + "<br>to <i>Introduction to Software Testing</i>, Ammann and Offutt.\n"
-                + "<br>Implementation by Wuzhi Xu, Nan Li, Lin Deng, and Scott Brown.\n"
-                + "<br>&copy; 2007-2017, all rights reserved.\n" + "<br>Last update: 22-Feb-2017\n</font></p>"
+                + "<br>Implementation by Wuzhi Xu, Nan Li, Lin Deng, Scott Brown, and Jenifer Cochran.\n"
+                + "<br>&copy; 2007-2017, all rights reserved.\n" + "<br>Last update: 20-July-2017\n</font></p>"
                 + "</body>" + "</html>";
 
         out.println(result);
+    }
+
+    private String ExecuteImportJavaFile(HttpServletRequest request)
+    {
+        String selectedMethod = request.getParameter("selectedMethod");
+        
+        FileItemFactory factory = new DiskFileItemFactory();
+        ServletFileUpload upload = new ServletFileUpload(factory);
+        
+        try 
+        {
+            List<FileItem> fields = upload.parseRequest(request);
+            for(FileItem file : fields)
+            {
+                try (InputStream inputStream = file.getInputStream()) 
+                {
+                    ClassFile classDoc = ClassFile.readClass(inputStream);
+                    methodsList.clear();
+                    for(IMethodSection method : classDoc.getMethodSections())
+                    {
+                        methodsList.add(String.format("Name: %s Descriptor: %s", method.getName(), method.getDescriptor()));
+                    }
+                }
+                catch (IOException e)
+                {
+                    e.printStackTrace();
+                }
+            }            
+        
+        }
+        catch (FileUploadException e)
+        {
+            e.printStackTrace();
+        }
+        finally
+        {
+            
+        }
+        return "";
     }
 
     private String ExecutePrimePathCoverageSetCoverAlgorithm1(HttpServletRequest request)
@@ -288,7 +351,7 @@ public class GraphCoverage extends HttpServlet
             paths.add(splittedPaths.get(i));
         }
         paths.remove(0);
-        result += printEdgeForm(edges, initialNode, endNode);
+        result += printEdgeForm(edges, initialNode, endNode, methodsList);
         try
         {
             result += printResult(printPrimePathCoverage(paths, null, title));
@@ -318,7 +381,7 @@ public class GraphCoverage extends HttpServlet
             if(!Pattern.matches(GraphUtil.nodePat, endNode.trim()))
                 endNode = "";
 
-            result += printEdgeForm(edges, initialNode, endNode);
+            result += printEdgeForm(edges, initialNode, endNode, methodsList);
             result += printResult(warning);
         }
         else
@@ -357,13 +420,13 @@ public class GraphCoverage extends HttpServlet
                     {
                         p.size();
                     }
-                    result += printEdgeForm(edges, initialNode, endNode);
+                    result += printEdgeForm(edges, initialNode, endNode, methodsList);
                     result += printResult(printPrimePathCoverage(paths, null, title));
                 }
                 catch(InvalidGraphException e)
                 {
                     warning = printWarning(e);
-                    result += printEdgeForm(edges, initialNode, endNode);
+                    result += printEdgeForm(edges, initialNode, endNode, methodsList);
                     result += printResult(warning);
                 } // end catch
             }
@@ -378,13 +441,13 @@ public class GraphCoverage extends HttpServlet
                 {
                     paths = g.findPrimePathCoverageWithInfeasibleSubPath(infeasiblePrimePaths,
                             infeasibleSubpaths);
-                    result += printEdgeForm(edges, initialNode, endNode);
+                    result += printEdgeForm(edges, initialNode, endNode, methodsList);
                     result += printResult(printPrimePathCoverage(paths, null, title));
                 }
                 catch(InvalidGraphException e)
                 {
                     warning = printWarning(e);
-                    result += printEdgeForm(edges, initialNode, endNode);
+                    result += printEdgeForm(edges, initialNode, endNode, methodsList);
                     result += printResult(warning);
                 } // end catch
             }
@@ -409,7 +472,7 @@ public class GraphCoverage extends HttpServlet
             if(!Pattern.matches(GraphUtil.nodePat, endNode.trim()))
                 endNode = "";
 
-            result += printEdgeForm(edges, initialNode, endNode);
+            result += printEdgeForm(edges, initialNode, endNode, methodsList);
             result += printResult(warning);
         }
         else
@@ -424,13 +487,13 @@ public class GraphCoverage extends HttpServlet
                     paths.get(i).size();
                 }
                 
-                result += printEdgeForm(edges, initialNode, endNode);
+                result += printEdgeForm(edges, initialNode, endNode, methodsList);
                 result += printResult(printEdgePairCoverage(paths, null, title));
             }
             catch(InvalidGraphException e)
             {
                 warning = printWarning(e);
-                result += printEdgeForm(edges, initialNode, endNode);
+                result += printEdgeForm(edges, initialNode, endNode, methodsList);
                 result += printResult(warning);
             }
         }
@@ -455,7 +518,7 @@ public class GraphCoverage extends HttpServlet
             if(!Pattern.matches(GraphUtil.nodePat, endNode.trim()))
                 endNode = "";
 
-            result += printEdgeForm(edges, initialNode, endNode);
+            result += printEdgeForm(edges, initialNode, endNode, methodsList);
             result += printResult(warning);
         }
         else
@@ -463,13 +526,13 @@ public class GraphCoverage extends HttpServlet
             try
             {
                 paths = g.findEdgeCoverage();
-                result += printEdgeForm(edges, initialNode, endNode);
+                result += printEdgeForm(edges, initialNode, endNode, methodsList);
                 result += printResult(printPaths(paths, null, title));
             }
             catch(InvalidGraphException e)
             {
                 warning = printWarning(e);
-                result += printEdgeForm(edges, initialNode, endNode);
+                result += printEdgeForm(edges, initialNode, endNode, methodsList);
                 result += printResult(warning);
             }
         }
@@ -493,7 +556,7 @@ public class GraphCoverage extends HttpServlet
             if(!Pattern.matches(GraphUtil.nodePat, endNode.trim()))
                 endNode = "";
 
-            result += printEdgeForm(edges, initialNode, endNode);
+            result += printEdgeForm(edges, initialNode, endNode, methodsList);
             result += printResult(warning);
         }
         else
@@ -501,13 +564,13 @@ public class GraphCoverage extends HttpServlet
             try
             {
                 paths = g.findNodeCoverage();
-                result += printEdgeForm(edges, initialNode, endNode);
+                result += printEdgeForm(edges, initialNode, endNode, methodsList);
                 result += printResult(printPaths(paths, null, title));
             }
             catch(InvalidGraphException e)
             {
                 warning = printWarning(e);
-                result += printEdgeForm(edges, initialNode, endNode);
+                result += printEdgeForm(edges, initialNode, endNode, methodsList);
                 result += printResult(warning);
             }
         }
@@ -531,7 +594,7 @@ public class GraphCoverage extends HttpServlet
             if(!Pattern.matches(GraphUtil.nodePat, endNode.trim()))
                 endNode = "";
 
-            result += printEdgeForm(edges, initialNode, endNode);
+            result += printEdgeForm(edges, initialNode, endNode, methodsList);
             result += printResult(warning);
 
         }
@@ -539,7 +602,7 @@ public class GraphCoverage extends HttpServlet
         {
             title = TestRequirements.EdgePair.toString();
             paths = g.findEdgePairs();
-            result += printEdgeForm(edges, initialNode, endNode);
+            result += printEdgeForm(edges, initialNode, endNode, methodsList);
             if(infeasibleEdgePairs == null)
                 infeasibleEdgePairs = "";
             result += printResult(printEdgePairs(paths, warning, title));
@@ -563,7 +626,7 @@ public class GraphCoverage extends HttpServlet
             if(!Pattern.matches(GraphUtil.nodePat, endNode.trim()))
                 endNode = "";
 
-            result += printEdgeForm(edges, initialNode, endNode);
+            result += printEdgeForm(edges, initialNode, endNode, methodsList);
             result += printResult(warning);
 
         }
@@ -571,7 +634,7 @@ public class GraphCoverage extends HttpServlet
         {
             title = TestRequirements.Edges.toString();
             paths = g.findEdges();
-            result += printEdgeForm(edges, initialNode, endNode);
+            result += printEdgeForm(edges, initialNode, endNode, methodsList);
             result += printResult(printRequirements(paths, warning, title));
         }
         
@@ -594,7 +657,7 @@ public class GraphCoverage extends HttpServlet
             if(!Pattern.matches(GraphUtil.nodePat, endNode.trim()))
                 endNode = "";
 
-            result += printEdgeForm(edges, initialNode, endNode);
+            result += printEdgeForm(edges, initialNode, endNode, methodsList);
             result += printResult(warning);
 
         }
@@ -602,7 +665,7 @@ public class GraphCoverage extends HttpServlet
         {
             title = TestRequirements.Nodes.toString();
             paths = g.findNodes();
-            result += printEdgeForm(edges, initialNode, endNode);
+            result += printEdgeForm(edges, initialNode, endNode, methodsList);
             result += printResult(printRequirements(paths, warning, title));
         }
         
@@ -624,7 +687,7 @@ public class GraphCoverage extends HttpServlet
             if(!Pattern.matches(GraphUtil.nodePat, endNode.trim()))
                 endNode = "";
 
-            result += printEdgeForm(edges, initialNode, endNode);
+            result += printEdgeForm(edges, initialNode, endNode, methodsList);
             result += printResult(warning);
 
         }
@@ -632,7 +695,7 @@ public class GraphCoverage extends HttpServlet
         {
             title = "Simple Paths";
             paths = g.findSimplePaths();
-            result += printEdgeForm(edges, initialNode, endNode);
+            result += printEdgeForm(edges, initialNode, endNode, methodsList);
             result += printResult(printRequirements(paths, warning, title));
         }
         
@@ -659,7 +722,7 @@ public class GraphCoverage extends HttpServlet
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
-        result += printEdgeForm(edges, initialNode, endNode);
+        result += printEdgeForm(edges, initialNode, endNode, methodsList);
         result += printResult(printPaths(paths, warning, title));   
         
         return result;
@@ -680,14 +743,14 @@ public class GraphCoverage extends HttpServlet
             if(!Pattern.matches(GraphUtil.nodePat, endNode.trim()))
                 endNode = "";
 
-            result += printEdgeForm(edges, initialNode, endNode);
+            result += printEdgeForm(edges, initialNode, endNode, methodsList);
             result += printResult(warning);
         }
         else
         {
             title = TestRequirements.PrimePaths.toString();
             paths = g.findPrimePaths();
-            result += printEdgeForm(edges, initialNode, endNode);
+            result += printEdgeForm(edges, initialNode, endNode, methodsList);
 
             if(infeasiblePrimePaths == null)
                 infeasiblePrimePaths = "";
@@ -708,7 +771,9 @@ public class GraphCoverage extends HttpServlet
         paths = null;
         infeasiblePrimePaths = "";
         infeasibleEdgePairs = "";
-        return printEdgeForm("", "", "");
+        List<String> test = Arrays.asList("val", "Val2");
+        methodsList = new ArrayList<String>();
+        return printEdgeForm("", "", "", test);
     }
 
     private String ExecuteAlgorithm2(String algorithm2Action, String action, HttpServletRequest request) throws IOException
@@ -729,7 +794,7 @@ public class GraphCoverage extends HttpServlet
                 if(!Pattern.matches(GraphUtil.nodePat, endNode.trim()))
                     endNode = "";
 
-                result += printEdgeForm(edges, initialNode, endNode);
+                result += printEdgeForm(edges, initialNode, endNode, methodsList);
                 result += printResult(warning);
             }
             else
@@ -789,7 +854,7 @@ public class GraphCoverage extends HttpServlet
 
                 paths.remove(0);
 
-                result += printEdgeForm(edges, initialNode, endNode);
+                result += printEdgeForm(edges, initialNode, endNode, methodsList);
                 result += printResult(printPaths(paths, null, title));
             }            
         }
@@ -808,7 +873,7 @@ public class GraphCoverage extends HttpServlet
                 if(!Pattern.matches(GraphUtil.nodePat, endNode.trim()))
                     endNode = "";
 
-                result += printEdgeForm(edges, initialNode, endNode);
+                result += printEdgeForm(edges, initialNode, endNode, methodsList);
                 result += printResult(warning);
             }
             else
@@ -874,13 +939,13 @@ public class GraphCoverage extends HttpServlet
 
                     paths.remove(0);
 
-                    result += printEdgeForm(edges, initialNode, endNode);
+                    result += printEdgeForm(edges, initialNode, endNode, methodsList);
                     result += printResult(printEdgePairCoverage(paths, null, title));
                 }
                 catch(InvalidGraphException e)
                 {
                     warning = printWarning(e);
-                    result += printEdgeForm(edges, initialNode, endNode);
+                    result += printEdgeForm(edges, initialNode, endNode, methodsList);
                     result += printResult(warning);
                 }
             }
@@ -899,7 +964,7 @@ public class GraphCoverage extends HttpServlet
                 if(!Pattern.matches(GraphUtil.nodePat, endNode.trim()))
                     endNode = "";
 
-                result += printEdgeForm(edges, initialNode, endNode);
+                result += printEdgeForm(edges, initialNode, endNode, methodsList);
                 result += printResult(warning);
             }
             else
@@ -967,7 +1032,7 @@ public class GraphCoverage extends HttpServlet
                 }
 
                 paths.remove(0);
-                result += printEdgeForm(edges, initialNode, endNode);
+                result += printEdgeForm(edges, initialNode, endNode, methodsList);
                 try
                 {
                     result += printResult(printPrimePathCoverage(paths, null, title));
@@ -1888,72 +1953,84 @@ public class GraphCoverage extends HttpServlet
 
         return result;
     }
+    
 
     // Effects: return a html page of Graph Coverage Computation Web Application
-    private String printEdgeForm(String edges, String initialNode, String endNode)
+    private String printEdgeForm(String edges, String initialNode, String endNode, List<String> methods)
     {
+                            //Title
         String form = "" + "<form name = \"graphCoverageForm\" method=\"post\" action=\"GraphCoverage\">\n"
-                + "<div style=\"text-align:center; font-weight:bold; font-size:125%\">Graph Information</div>\n"
-                + "<table id = \"tableForm\" border=\"1\" width=\"100%\" cellspacing=\"0\" cellpadding=\"0\"  bgcolor=\"#EEFFEE\">\n"
-                + "<tr>\n" + "  <td width=\"33%\">\n" + "    <table border=\"0\">\n" + "      <tr>\n" + "        <td>\n"
-                + "          Please enter your <font color=\"green\"><b>graph edges</b></font> in the text box below. \n"
-                + "        	Put each edge in one line. Enter edges as pairs of nodes, separated by spaces.(e.g.: 1 3)\n"
-                + "        </td>\n" + "      </tr>\n" + "      <tr align=\"center\">\n"
-                + "        <td> <textarea rows=\"5\" name=\"edges\" cols=\"25\">\n" + edges + "</textarea></td>\n"
-                + "      </tr>\n" + "		</table>\n" + "  </td>\n" + "  <td width=\"33%\" valign=\"top\">\n"
-                + "	   <table border=\"0\">\n" + "      <tr><td>\n"
-                + "        Enter <font color=\"green\"><b>initial nodes</b></font> below (can be more than one), separated by spaces. If the text box  \n"
-                + "        below is empty, the first node in the left box will be the initial node.\n"
-                + "      </td></tr>\n" + "      <tr align = center>\n" + "        <td>\n"
-                + "          <p> &nbsp;</p><input type=\"text\" name=\"initialNode\" size=\"5\" value=\"" + initialNode
-                + "\">\n" + "        </td>\n" + "      </tr>\n" + "		</table>\n" + "  </td>\n"
-                + "  <td width=\"34%\" valign=\"top\">\n" + "		<table border=0>\n"
-                + "      <tr><td>Enter <font color=\"green\"><b>final nodes</b></font> below (can be more than one), \n"
-                + "        separated by spaces.\n" + "      </td></tr>\n" + "      <tr align = center>\n"
-                + "        <td>\n"
-                + "          <p> &nbsp;</p><input type=\"text\" name=\"endNode\" size=\"30\" value=\"" + endNode
-                + "\">\n" + "        </td>\n" + "      </tr>\n" + "		</table>\n" + "  </td>\n" + "</tr>\n"
-                + "</table>\n" + "<table width=\"100%\">\n" + "<tr><td></tr> <tr><td></tr>\n"
-                + "<tr><td></tr> <tr><td></tr>\n" + "<tr>\n"
-                + "  <td align=right width=\"15%\" ><b>Test Requirements:</b></td>\n"
-                + "	 <td width=\"85%\" colspan=\"3\">\n"
-                + "    <input type=\"submit\" value=\"Nodes\" name=\"action\">\n"
-                + " 	&nbsp;<input type=\"submit\" value=\"Edges\" name=\"action\">\n"
-                + "		&nbsp;<input type=\"submit\" value=\"Edge-Pair\" name=\"action\">\n"
-                + "		&nbsp;<input type=\"submit\" value=\"Simple Paths\" name=\"action\">\n"
-                + "    &nbsp;<input type=\"submit\" value=\"Prime Paths\" name=\"action\">\n"
-                // +" &nbsp;<input type=\"submit\" value=\"Test\"
-                // name=\"action\">\n"
-                + "  </td>\n" + "</tr>\n" + "<tr><td></tr> <tr><td></tr>\n" + "<tr>\n"
-                + "  <td align=right width = \"15%\"><b>Test Paths:</b></td>\n"
-                + "	 <td width=\"85%\" colspan=\"3\"> Algorithm 1: Slower, more test paths, shorter test paths"
-                + "									&nbsp; <input type=\"submit\" value=\"Node Coverage\" name=\"action\">\n"
-                + "									&nbsp;<input type=\"submit\" value=\"Edge Coverage\" name=\"action\">\n"
-                + "      							&nbsp;<input type=\"submit\" value=\"Edge-Pair Coverage\" name=\"action\">\n "
-                + " 	   								&nbsp;<input type=\"submit\" value=\"Prime Path Coverage\" name=\"action\">\n"
-                + "   </td>\n" + "</tr>\n" + "<tr>\n" + "  <td align=right width = \"15%\"></td>\n"
-                + "	 <td width=\"85%\" colspan=\"3\"> Algorithm 2: Faster, fewer test paths, longer test paths"
-                + "                                    &nbsp; &nbsp; <input type=\"submit\" value=\"Edge Coverage\" name=\"algorithm2\"> \n"
-                + "                                    &nbsp; <input type=\"submit\" value=\"Edge-Pair Coverage\" name=\"algorithm2\"> \n"
-                + "                                    &nbsp; <input type=\"submit\" value=\"Prime Path Coverage\" name=\"algorithm2\"> \n"
-                + "   </td>\n" + "</tr>\n" + "<tr>\n" + "  <td align=right width = \"15%\"></td>\n"
-                + "	 <td width=\"85%\" colspan=\"3\"> Algorithm 1 is our original, not particularly clever, algorithm to find test paths from graph coverage test requirements. In our 2012 ICST\n"
-                + "    paper, \"<em>Better Algorithms to Minimize the Cost of Test Paths</em>,\" we described an algorithm that combines test requirements to produce fewer, \n"
-                + "    but longer test paths (algorithm 2). Users can evaluate the tradeoffs between more but shorter test paths and fewer but longer  \n"
-                + "    test paths and choose the appropriate algorithm.\n" + "   </td>\n" + "</tr>\n"
-                // +"&nbsp;<input type=\"submit\"
-                // value=\"MinimumTestPathViaPrefixGraph\" name=\"action\">\n"
-                // +" &nbsp;<input type=\"submit\" value=\"Prime Path Coverage
-                // using Set Cover\" name=\"action\">\n"
-                // +" </td></tr>\n"
-                + "<tr><td></tr> <tr><td></tr>\n" + "<tr>\n"
-                + "  <td align=right width = \"15%\" ><b>Other Tools:</b></td>\n"
-                + "  <td aligh=\"center\" width=\"85%\" colspan=\"3\">\n"
-                + "	  <input type=\"submit\" value=\"New Graph\" name=\"action\">\n"
-                + "		&nbsp;<input type=\"submit\" value=\"Data Flow Coverage\" name=\"action\">\n"
-                + "		&nbsp;<input type=\"submit\" value=\"Logic Coverage\" name=\"action\">\n"
-                + "		&nbsp;<input type=\"submit\" value=\"Minimal-MUMCUT Coverage\" name=\"action\">\n" + "  </td>\n"
-                + "</tr>\n" + "<tr><td></tr> <tr><td></tr>\n";
+                         + "<div style=\"text-align:center; font-weight:bold; font-size:125%\">Graph Information</div>\n"
+                         // Import java file button
+                         + "<div style=\"text-align:center;\">"
+                             +"<td align=right width=\\\"15%\\\" >Upload Graph from Java file:</td>\n"
+                             + "<input type=\"file\" value=\"Import Graph from Java .class File\" name=\"importJavaFile\" value=\"importJavaFileAction\">"
+                             +"<input type=\"submit\" action=\"import graph\" />"
+                             +"<select name =\"selectedMethod\">"
+                               +"<option selected disabled>Choose Method Here</option>"
+                               + CreateMethodOptions(methods) 
+                             + "</select>"
+                         + "</div>\n"
+                         + "<table id = \"tableForm\" border=\"1\" width=\"100%\" cellspacing=\"0\" cellpadding=\"0\"  bgcolor=\"#EEFFEE\">\n"
+                         + "<tr>\n" + "  <td width=\"33%\">\n" + "    <table border=\"0\">\n" + "      <tr>\n" + "        <td>\n"
+                         + "          Please enter your <font color=\"green\"><b>graph edges</b></font> in the text box below. \n"
+                         + "        	Put each edge in one line. Enter edges as pairs of nodes, separated by spaces.(e.g.: 1 3)\n"
+                         + "        </td>\n" + "      </tr>\n" + "      <tr align=\"center\">\n"
+                         + "        <td> <textarea rows=\"5\" name=\"edges\" cols=\"25\">\n" + edges + "</textarea></td>\n"
+                         + "      </tr>\n" + "		</table>\n" + "  </td>\n" + "  <td width=\"33%\" valign=\"top\">\n"
+                         + "	   <table border=\"0\">\n" + "      <tr><td>\n"
+                         + "        Enter <font color=\"green\"><b>initial nodes</b></font> below (can be more than one), separated by spaces. If the text box  \n"
+                         + "        below is empty, the first node in the left box will be the initial node.\n"
+                         + "      </td></tr>\n" + "      <tr align = center>\n" + "        <td>\n"
+                         + "          <p> &nbsp;</p><input type=\"text\" name=\"initialNode\" size=\"5\" value=\"" + initialNode
+                         + "\">\n" + "        </td>\n" + "      </tr>\n" + "		</table>\n" + "  </td>\n"
+                         + "  <td width=\"34%\" valign=\"top\">\n" + "		<table border=0>\n"
+                         + "      <tr><td>Enter <font color=\"green\"><b>final nodes</b></font> below (can be more than one), \n"
+                         + "        separated by spaces.\n" + "      </td></tr>\n" + "      <tr align = center>\n"
+                         + "        <td>\n"
+                         + "          <p> &nbsp;</p><input type=\"text\" name=\"endNode\" size=\"30\" value=\"" + endNode
+                         + "\">\n" + "        </td>\n" + "      </tr>\n" + "		</table>\n" + "  </td>\n" + "</tr>\n"
+                         + "</table>\n" + "<table width=\"100%\">\n" + "<tr><td></tr> <tr><td></tr>\n"
+                         + "<tr><td></tr> <tr><td></tr>\n" + "<tr>\n"
+                         + "  <td align=right width=\"15%\" ><b>Test Requirements:</b></td>\n"
+                         + "	 <td width=\"85%\" colspan=\"3\">\n"
+                         + "    <input type=\"submit\" value=\"Nodes\" name=\"action\">\n"
+                         + " 	&nbsp;<input type=\"submit\" value=\"Edges\" name=\"action\">\n"
+                         + "		&nbsp;<input type=\"submit\" value=\"Edge-Pair\" name=\"action\">\n"
+                         + "		&nbsp;<input type=\"submit\" value=\"Simple Paths\" name=\"action\">\n"
+                         + "    &nbsp;<input type=\"submit\" value=\"Prime Paths\" name=\"action\">\n"
+                         // +" &nbsp;<input type=\"submit\" value=\"Test\"
+                         // name=\"action\">\n"
+                         + "  </td>\n" + "</tr>\n" + "<tr><td></tr> <tr><td></tr>\n" + "<tr>\n"
+                         + "  <td align=right width = \"15%\"><b>Test Paths:</b></td>\n"
+                         + "	 <td width=\"85%\" colspan=\"3\"> Algorithm 1: Slower, more test paths, shorter test paths"
+                         + "									&nbsp; <input type=\"submit\" value=\"Node Coverage\" name=\"action\">\n"
+                         + "									&nbsp;<input type=\"submit\" value=\"Edge Coverage\" name=\"action\">\n"
+                         + "      							&nbsp;<input type=\"submit\" value=\"Edge-Pair Coverage\" name=\"action\">\n "
+                         + " 	   								&nbsp;<input type=\"submit\" value=\"Prime Path Coverage\" name=\"action\">\n"
+                         + "   </td>\n" + "</tr>\n" + "<tr>\n" + "  <td align=right width = \"15%\"></td>\n"
+                         + "	 <td width=\"85%\" colspan=\"3\"> Algorithm 2: Faster, fewer test paths, longer test paths"
+                         + "                                    &nbsp; &nbsp; <input type=\"submit\" value=\"Edge Coverage\" name=\"algorithm2\"> \n"
+                         + "                                    &nbsp; <input type=\"submit\" value=\"Edge-Pair Coverage\" name=\"algorithm2\"> \n"
+                         + "                                    &nbsp; <input type=\"submit\" value=\"Prime Path Coverage\" name=\"algorithm2\"> \n"
+                         + "   </td>\n" + "</tr>\n" + "<tr>\n" + "  <td align=right width = \"15%\"></td>\n"
+                         + "	 <td width=\"85%\" colspan=\"3\"> Algorithm 1 is our original, not particularly clever, algorithm to find test paths from graph coverage test requirements. In our 2012 ICST\n"
+                         + "    paper, \"<em>Better Algorithms to Minimize the Cost of Test Paths</em>,\" we described an algorithm that combines test requirements to produce fewer, \n"
+                         + "    but longer test paths (algorithm 2). Users can evaluate the tradeoffs between more but shorter test paths and fewer but longer  \n"
+                         + "    test paths and choose the appropriate algorithm.\n" + "   </td>\n" + "</tr>\n"
+                         // +"&nbsp;<input type=\"submit\"
+                         // value=\"MinimumTestPathViaPrefixGraph\" name=\"action\">\n"
+                         // +" &nbsp;<input type=\"submit\" value=\"Prime Path Coverage
+                         // using Set Cover\" name=\"action\">\n"
+                         // +" </td></tr>\n"
+                         + "<tr><td></tr> <tr><td></tr>\n" + "<tr>\n"
+                         + "  <td align=right width = \"15%\" ><b>Other Tools:</b></td>\n"
+                         + "  <td aligh=\"center\" width=\"85%\" colspan=\"3\">\n"
+                         + "	  <input type=\"submit\" value=\"New Graph\" name=\"action\">\n"
+                         + "		&nbsp;<input type=\"submit\" value=\"Data Flow Coverage\" name=\"action\">\n"
+                         + "		&nbsp;<input type=\"submit\" value=\"Logic Coverage\" name=\"action\">\n"
+                         + "		&nbsp;<input type=\"submit\" value=\"Minimal-MUMCUT Coverage\" name=\"action\">\n" + "  </td>\n"
+                         + "</tr>\n" + "<tr><td></tr> <tr><td></tr>\n";
         // only display the share button when an action has been submitted
         // i.e. a graph is displayed
         // otherwise, hide the button
@@ -1976,5 +2053,15 @@ public class GraphCoverage extends HttpServlet
         ;
 
         return form;
+    }
+
+    private String CreateMethodOptions(List<String> methods)
+    {
+        StringBuilder options = new StringBuilder();
+        for(String method : methods)
+        {
+            options.append(String.format("<option value=\"%s\">%s</option>", method, method));
+        }
+        return options.toString();
     }
 }

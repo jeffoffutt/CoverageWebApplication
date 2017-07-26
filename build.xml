@@ -3,187 +3,591 @@
 <!--  coverage build file                                                     -->
 <!--  ======================================================================= -->
 <project name="coverage" basedir=".">
-    <property name="name" value="coverage" />
-    <property name="version" value="1.0" />
+	<property name="name" value="coverage" />
+	<property name="version" value="1.0" />
 
-    <property name="debug" value="on" />
-    <property name="deprecation" value="off" />
-    <property name="optimize" value="off" />
+	<property name="debug" value="on" />
+	<property name="deprecation" value="off" />
+	<property name="optimize" value="off" />
 
-	<property name="web.dir" value="webcontent"/>
-    <property name="src.dir" value="src" />
-   	<property name="dist.dir" value="dist"/>
-	<property name="baseofdist.dir" value="coverage"/>
-	<property name="archive.dir" value="${name}_${version}"/>
-	
-	<property name="applet.file" value="GraphApplet.java"/>
-	<property name="applet.dest.dir" value="${web.dir}/coverage"/>
-	<property name="applet.lib.dir" value="${applet.dest.dir}/lib"/>
-	<property name="docs.dir" value="docs"/>
-	
-	<property name="docs.api.dir" value="${docs.dir}/api"/>
-	<property name="webinf.dir" value="${web.dir}/WEB-INF"/>
-	<property name="build.dir" value="${webinf.dir}/classes"/>
-    <property name="lib.dir" value="${webinf.dir}/lib" />
-	
-	<property name="author.name" value="Wuzhi Xu"/>
-	<property name="vendor.name" value="George Mason University"/>
+	<property name="web.dir" value="webcontent" />
+	<property name="src.dir" value="src" />
+	<property name="dist.dir" value="dist" />
+	<property name="baseofdist.dir" value="coverage" />
+	<property name="archive.dir" value="${name}_${version}" />
 
-    <property name="packages" value="coverage.graph, coverage.logic, coverage.web" />
+	<property name="applet.file" value="GraphApplet.java" />
+	<property name="applet.dest.dir" value="${web.dir}/coverage" />
+	<property name="applet.lib.dir" value="${applet.dest.dir}/lib" />
+	<property name="docs.dir" value="docs" />
 
-<!-- =================================================================== -->
-<!-- Defines the classpath used for compilation and test.                -->
-<!-- =================================================================== -->
-<path id="lib.classpath">
-    <fileset dir="${lib.dir}">
-        <include name="*.jar"/>
-    </fileset>
-</path>
+	<property name="docs.api.dir" value="${docs.dir}/api" />
+	<property name="webinf.dir" value="${web.dir}/WEB-INF" />
+	<property name="build.dir" value="${webinf.dir}/classes" />
+	<property name="lib.dir" value="${webinf.dir}/lib" />
 
-<path id="applet.classpath">
-	<fileset dir="${applet.lib.dir}">
-		<include name="*.jar"/>
-	</fileset>
-</path>
+	<property name="author.name" value="Wuzhi Xu" />
+	<property name="vendor.name" value="George Mason University" />
 
-<target name="init">
-  <tstamp>
-    <format property="TODAY" pattern="dd_MM_yyyy" locale="en,US"/>
-  </tstamp>
-</target>
-<!--  ===================================================================  -->
-<!--  Compile the source code                                             -->
-<!--  ===================================================================  -->
-<target name="compile" depends="init">
-    <mkdir dir="${build.dir}"/>
-	<echo> Compiling coverage source in ${src.dir} into ${build.dir} </echo>
-    <javac srcdir="${src.dir}" destdir="${build.dir}"
-           debug="${debug}" deprecation="${deprecation}" optimize="${optimize}"
-        classpathref="lib.classpath" >
-    	<include name="**/*.java"/>
-    </javac>
-</target>
+	<property name="packages" value="coverage.graph, coverage.logic, coverage.web" />
 
-<!--  ===================================================================  -->
-<!--  Creates the jar archive                                              -->
-<!--  ===================================================================  -->
-<target name="jar" depends="init">
-    <mkdir dir="${dist.dir}" />
-	<mkdir dir="${docs.dir}"/>
-	<manifest file="${docs.dir}/MANIFEST.MF">
-	    <attribute name="Built-By" value="${author.name}"/>
-	    <section name="${name}">
-	      <attribute name="Specification-Title" value="${name}"/>
-	      <attribute name="Specification-Version" value="${version}"/>
-	      <attribute name="Specification-Vendor" value="${vendor.name}"/>
-	      <attribute name="Implementation-Title" value="${name}"/>
-	      <attribute name="Implementation-Version" value="${version} ${TODAY}"/> 
-	      <attribute name="Implementation-Vendor" value="${vendor.name}"/>
-	    </section>
-	</manifest>
+	<!-- =================================================================== -->
+	<!-- Defines the classpath used for compilation and test.                -->
+	<!-- =================================================================== -->
+	<path id="lib.classpath">
+		<fileset dir="${lib.dir}">
+			<include name="*.jar" />
+		</fileset>
+	</path>
 
-    <echo>Generating binary coverage jar file graph.jar in ${dist.dir}...</echo>
-    <jar jarfile="${dist.dir}/graph.jar" manifest="${docs.dir}/MANIFEST.MF">
-        <fileset dir="${build.dir}">
-        	<include name="**/*.class"/>
-        	<exclude name="**/Test*.class"/>        		
-        </fileset>
-    </jar>
+	<path id="applet.classpath">
+		<fileset dir="${applet.lib.dir}">
+			<include name="*.jar" />
+		</fileset>
+	</path>
 
-	<echo>Deleting the old coverage jar file in ${applet.lib.dir}</echo>
-	<delete includeemptydirs="false">
-	  <fileset dir="${applet.lib.dir}" includes="graph.jar"/>
-	</delete>
-	<copy file="${dist.dir}/graph.jar" todir="${applet.lib.dir}"/>
-</target>
+	<target name="init">
+		<tstamp>
+			<format property="TODAY" pattern="dd_MM_yyyy" locale="en,US" />
+		</tstamp>
+	</target>
+	<!--  ===================================================================  -->
+	<!--  Compile the source code                                             -->
+	<!--  ===================================================================  -->
+	<target name="compile" depends="init">
+		<mkdir dir="${build.dir}" />
+		<echo> Compiling coverage source in ${src.dir} into ${build.dir} </echo>
+		<javac srcdir="${src.dir}" destdir="${build.dir}" debug="${debug}" deprecation="${deprecation}" optimize="${optimize}" classpathref="lib.classpath">
+			<include name="**/*.java" />
+		</javac>
+	</target>
+
+	<!--  ===================================================================  -->
+	<!--  Creates the jar archive                                              -->
+	<!--  ===================================================================  -->
+	<target name="jar" depends="init">
+		<mkdir dir="${dist.dir}" />
+		<mkdir dir="${docs.dir}" />
+		<manifest file="${docs.dir}/MANIFEST.MF">
+			<attribute name="Built-By" value="${author.name}" />
+			<section name="${name}">
+				<attribute name="Specification-Title" value="${name}" />
+				<attribute name="Specification-Version" value="${version}" />
+				<attribute name="Specification-Vendor" value="${vendor.name}" />
+				<attribute name="Implementation-Title" value="${name}" />
+				<attribute name="Implementation-Version" value="${version} ${TODAY}" />
+				<attribute name="Implementation-Vendor" value="${vendor.name}" />
+			</section>
+		</manifest>
+
+		<echo>Generating binary coverage jar file graph.jar in ${dist.dir}...</echo>
+		<echo>BUILD DIR:  ${build.dir}</echo>
+		<jar jarfile="${dist.dir}/graph.jar" manifest="${docs.dir}/MANIFEST.MF">
+			<fileset dir="${build.dir}">
+				<include name="**/*.class" />
+				<exclude name="**/Test*.class" />
+			</fileset>
+		</jar>
+
+		<echo>Deleting the old coverage jar file in ${applet.lib.dir}</echo>
+		<delete includeemptydirs="false">
+			<fileset dir="${applet.lib.dir}" includes="graph.jar" />
+		</delete>
+		<copy file="${dist.dir}/graph.jar" todir="${applet.lib.dir}" />
+
+		<!--  ===================================================================  -->
+		<!--  Adding Control Flow Graph Dependencies                               -->
+		<!--  ===================================================================  -->
+
+		<!--  Eclipse dependencies                                                 -->
+		<echo>Generating Control Flow coverage jar file org.eclipse.draw2d_3.9.0.201212170307.jar in ${dist.dir}...</echo>
+		<jar jarfile="${dist.dir}/org.eclipse.draw2d_3.9.0.201212170307.jar" manifest="${docs.dir}/MANIFEST.MF">
+			<fileset dir="${build.dir}">
+				<include name="**/*.class" />
+				<exclude name="**/Test*.class" />
+			</fileset>
+		</jar>
+
+		<echo>Deleting the old Control Flow coverage jar file org.eclipse.draw2d_3.9.0.201212170307.jar in ${applet.lib.dir}</echo>
+		<delete includeemptydirs="false">
+			<fileset dir="${applet.lib.dir}" includes="org.eclipse.draw2d_3.9.0.201212170307.jar" />
+		</delete>
+
+		<copy file="${dist.dir}/org.eclipse.draw2d_3.9.0.201212170307.jar" todir="${applet.lib.dir}" />
+
+		<echo>Generating Control Flow coverage jar file org.eclipse.equinox.common-3.6.0.v20100503.jar in ${dist.dir}...</echo>
+		<jar jarfile="${dist.dir}/org.eclipse.equinox.common-3.6.0.v20100503.jar" manifest="${docs.dir}/MANIFEST.MF">
+			<fileset dir="${build.dir}">
+				<include name="**/*.class" />
+				<exclude name="**/Test*.class" />
+			</fileset>
+		</jar>
+
+		<echo>Deleting the old Control Flow coverage jar file org.eclipse.equinox.common-3.6.0.v20100503.jar in ${applet.lib.dir}</echo>
+		<delete includeemptydirs="false">
+			<fileset dir="${applet.lib.dir}" includes="org.eclipse.equinox.common-3.6.0.v20100503.jar" />
+		</delete>
+
+		<copy file="${dist.dir}/org.eclipse.equinox.common-3.6.0.v20100503.jar" todir="${applet.lib.dir}" />
+
+
+		<echo>Generating Control Flow coverage jar file org.eclipse.jdt.core-3.10.0.v20140604-1726.jar in ${dist.dir}...</echo>
+		<jar jarfile="${dist.dir}/org.eclipse.jdt.core-3.10.0.v20140604-1726.jar" manifest="${docs.dir}/MANIFEST.MF">
+			<fileset dir="${build.dir}">
+				<include name="**/*.class" />
+				<exclude name="**/Test*.class" />
+			</fileset>
+		</jar>
+
+		<echo>Deleting the old Control Flow coverage jar file org.eclipse.jdt.core-3.10.0.v20140604-1726.jar in ${applet.lib.dir}</echo>
+		<delete includeemptydirs="false">
+			<fileset dir="${applet.lib.dir}" includes="org.eclipse.jdt.core-3.10.0.v20140604-1726.jar" />
+		</delete>
+
+
+		<copy file="${dist.dir}/org.eclipse.jdt.core-3.10.0.v20140604-1726.jar" todir="${applet.lib.dir}" />
+
+		<echo>Generating Control Flow coverage jar file org.eclipse.jface.jar in ${dist.dir}...</echo>
+		<jar jarfile="${dist.dir}/org.eclipse.jface.jar" manifest="${docs.dir}/MANIFEST.MF">
+			<fileset dir="${build.dir}">
+				<include name="**/*.class" />
+				<exclude name="**/Test*.class" />
+			</fileset>
+		</jar>
+
+		<echo>Deleting the old Control Flow coverage jar file org.eclipse.jdt.core-3.10.0.v20140604-1726.jar in ${applet.lib.dir}</echo>
+		<delete includeemptydirs="false">
+			<fileset dir="${applet.lib.dir}" includes="org.eclipse.jface.jar" />
+		</delete>
+
+
+		<copy file="${dist.dir}/org.eclipse.jface.jar" todir="${applet.lib.dir}" />
+
+		<echo>Generating Control Flow coverage jar file org.eclipse.osgi-3.7.1.jar in ${dist.dir}...</echo>
+		<jar jarfile="${dist.dir}/org.eclipse.osgi-3.7.1.jar" manifest="${docs.dir}/MANIFEST.MF">
+			<fileset dir="${build.dir}">
+				<include name="**/*.class" />
+				<exclude name="**/Test*.class" />
+			</fileset>
+		</jar>
+
+		<echo>Deleting the old Control Flow coverage jar file org.eclipse.osgi-3.7.1.jar in ${applet.lib.dir}</echo>
+		<delete includeemptydirs="false">
+			<fileset dir="${applet.lib.dir}" includes="org.eclipse.osgi-3.7.1.jar" />
+		</delete>
+
+		<copy file="${dist.dir}/org.eclipse.osgi-3.7.1.jar" todir="${applet.lib.dir}" />
+
+		<echo>Generating Control Flow coverage jar file org.eclipse.swt.win32.win32.x86_64-4.3.jar in ${dist.dir}...</echo>
+		<jar jarfile="${dist.dir}/org.eclipse.swt.win32.win32.x86_64-4.3.jar" manifest="${docs.dir}/MANIFEST.MF">
+			<fileset dir="${build.dir}">
+				<include name="**/*.class" />
+				<exclude name="**/Test*.class" />
+			</fileset>
+		</jar>
+
+		<echo>Deleting the old Control Flow coverage jar file org.eclipse.swt.win32.win32.x86_64-4.3.jar in ${applet.lib.dir}</echo>
+		<delete includeemptydirs="false">
+			<fileset dir="${applet.lib.dir}" includes="org.eclipse.swt.win32.win32.x86_64-4.3.jar" />
+		</delete>
+
+		<copy file="${dist.dir}/org.eclipse.swt.win32.win32.x86_64-4.3.jar" todir="${applet.lib.dir}" />
+
+		<echo>Generating Control Flow coverage jar file org.eclipse.ui.views_3.2.1.M20060906-0800.jar in ${dist.dir}...</echo>
+		<jar jarfile="${dist.dir}/org.eclipse.ui.views_3.2.1.M20060906-0800.jar" manifest="${docs.dir}/MANIFEST.MF">
+			<fileset dir="${build.dir}">
+				<include name="**/*.class" />
+				<exclude name="**/Test*.class" />
+			</fileset>
+		</jar>
+
+		<echo>Deleting the old Control Flow coverage jar file org.eclipse.ui.views_3.2.1.M20060906-0800.jar in ${applet.lib.dir}</echo>
+		<delete includeemptydirs="false">
+			<fileset dir="${applet.lib.dir}" includes="org.eclipse.ui.views_3.2.1.M20060906-0800.jar" />
+		</delete>
+
+		<copy file="${dist.dir}/org.eclipse.ui.views_3.2.1.M20060906-0800.jar" todir="${applet.lib.dir}" />
+
+		<!--  Workbench dependencies                                                 -->
+		<echo>Generating Control Flow coverage jar file workbench-3.3.0-I20070608-1100.jar in ${dist.dir}...</echo>
+		<jar jarfile="${dist.dir}/workbench-3.3.0-I20070608-1100.jar" manifest="${docs.dir}/MANIFEST.MF">
+			<fileset dir="${build.dir}">
+				<include name="**/*.class" />
+				<exclude name="**/Test*.class" />
+			</fileset>
+		</jar>
+
+		<echo>Deleting the old Control Flow coverage jar file workbench-3.3.0-I20070608-1100.jar in ${applet.lib.dir}</echo>
+		<delete includeemptydirs="false">
+			<fileset dir="${applet.lib.dir}" includes="workbench-3.3.0-I20070608-1100.jar" />
+		</delete>
+
+		<copy file="${dist.dir}/workbench-3.3.0-I20070608-1100.jar" todir="${applet.lib.dir}" />
+
+		<!--  asm dependencies                                                 -->
+		<echo>Generating Control Flow coverage jar file com.drgarbage.asm_5.0.3.jar in ${dist.dir}...</echo>
+		<jar jarfile="${dist.dir}/com.drgarbage.asm_5.0.3.jar" manifest="${docs.dir}/MANIFEST.MF">
+			<fileset dir="${build.dir}">
+				<include name="**/*.class" />
+				<exclude name="**/Test*.class" />
+			</fileset>
+		</jar>
+
+		<echo>Deleting the old Control Flow coverage jar file com.drgarbage.asm_5.0.3.jar in ${applet.lib.dir}</echo>
+		<delete includeemptydirs="false">
+			<fileset dir="${applet.lib.dir}" includes="com.drgarbage.asm_5.0.3.jar" />
+		</delete>
+
+		<copy file="${dist.dir}/com.drgarbage.asm_5.0.3.jar" todir="${applet.lib.dir}" />
+
+		<echo>Generating Control Flow coverage jar file com.drgarbage.asm.util_5.0.3.jar in ${dist.dir}...</echo>
+		<jar jarfile="${dist.dir}/com.drgarbage.asm.util_5.0.3.jar" manifest="${docs.dir}/MANIFEST.MF">
+			<fileset dir="${build.dir}">
+				<include name="**/*.class" />
+				<exclude name="**/Test*.class" />
+			</fileset>
+		</jar>
+
+		<echo>Deleting the old Control Flow coverage jar file com.drgarbage.asm.util_5.0.3.jar in ${applet.lib.dir}</echo>
+		<delete includeemptydirs="false">
+			<fileset dir="${applet.lib.dir}" includes="com.drgarbage.asm.util_5.0.3.jar" />
+		</delete>
+
+		<copy file="${dist.dir}/com.drgarbage.asm.util_5.0.3.jar" todir="${applet.lib.dir}" />
+
+		<!--  features dependencies                                                 -->
+		<echo>Generating Control Flow coverage jar file com.drgarbage.controlflowgraphfactory_4.4.1.201408050542.jar in ${dist.dir}...</echo>
+		<jar jarfile="${dist.dir}/com.drgarbage.controlflowgraphfactory_4.4.1.201408050542.jar" manifest="${docs.dir}/MANIFEST.MF">
+			<fileset dir="${build.dir}">
+				<include name="**/*.class" />
+				<exclude name="**/Test*.class" />
+			</fileset>
+		</jar>
+
+		<echo>Deleting the old Control Flow coverage jar file com.drgarbage.controlflowgraphfactory_4.4.1.201408050542.jar in ${applet.lib.dir}</echo>
+		<delete includeemptydirs="false">
+			<fileset dir="${applet.lib.dir}" includes="com.drgarbage.controlflowgraphfactory_4.4.1.201408050542.jar" />
+		</delete>
+
+		<copy file="${dist.dir}/com.drgarbage.controlflowgraphfactory_4.4.1.201408050542.jar" todir="${applet.lib.dir}" />
+
+		<echo>Generating Control Flow coverage jar file com.drgarbage.sourcecodevisualizer_4.4.0.201408050542.jar in ${dist.dir}...</echo>
+		<jar jarfile="${dist.dir}/com.drgarbage.sourcecodevisualizer_4.4.0.201408050542.jar" manifest="${docs.dir}/MANIFEST.MF">
+			<fileset dir="${build.dir}">
+				<include name="**/*.class" />
+				<exclude name="**/Test*.class" />
+			</fileset>
+		</jar>
+
+		<echo>Deleting the old Control Flow coverage jar file com.drgarbage.sourcecodevisualizer_4.4.0.201408050542.jar in ${applet.lib.dir}</echo>
+		<delete includeemptydirs="false">
+			<fileset dir="${applet.lib.dir}" includes="com.drgarbage.sourcecodevisualizer_4.4.0.201408050542.jar" />
+		</delete>
+
+		<copy file="${dist.dir}/com.drgarbage.sourcecodevisualizer_4.4.0.201408050542.jar" todir="${applet.lib.dir}" />
+
+		<!--  plugins dependencies                                                 -->
+		<echo>Generating Control Flow coverage jar file com.drgarbage.asm_5.0.3.201408050542.jar in ${dist.dir}...</echo>
+		<jar jarfile="${dist.dir}/com.drgarbage.asm_5.0.3.201408050542.jar" manifest="${docs.dir}/MANIFEST.MF">
+			<fileset dir="${build.dir}">
+				<include name="**/*.class" />
+				<exclude name="**/Test*.class" />
+			</fileset>
+		</jar>
+
+		<echo>Generating Control Flow coverage jar file com.drgarbage.sourcecodevisualizer.plugin_4.4.0.201408050542.jar in ${dist.dir}...</echo>
+		<jar jarfile="${dist.dir}/com.drgarbage.sourcecodevisualizer.plugin_4.4.0.201408050542.jar" manifest="${docs.dir}/MANIFEST.MF">
+			<fileset dir="${build.dir}">
+				<include name="**/*.class" />
+				<exclude name="**/Test*.class" />
+			</fileset>
+		</jar>
+
+		<echo>Deleting the old Control Flow coverage jar file com.drgarbage.sourcecodevisualizer.plugin_4.4.0.201408050542.jar in ${applet.lib.dir}</echo>
+		<delete includeemptydirs="false">
+			<fileset dir="${applet.lib.dir}" includes="com.drgarbage.sourcecodevisualizer.plugin_4.4.0.201408050542.jar" />
+		</delete>
+
+		<copy file="${dist.dir}/com.drgarbage.sourcecodevisualizer.plugin_4.4.0.201408050542.jar" todir="${applet.lib.dir}" />
+
+		<echo>Deleting the old Control Flow coverage jar file com.drgarbage.asm_5.0.3.201408050542.jar in ${applet.lib.dir}</echo>
+		<delete includeemptydirs="false">
+			<fileset dir="${applet.lib.dir}" includes="com.drgarbage.asm_5.0.3.201408050542.jar" />
+		</delete>
+
+		<copy file="${dist.dir}/com.drgarbage.asm_5.0.3.201408050542.jar" todir="${applet.lib.dir}" />
+
+		<echo>Generating Control Flow coverage jar file com.drgarbage.bytecodevisualizer_4.4.1.201408050542.jar in ${dist.dir}...</echo>
+		<jar jarfile="${dist.dir}/com.drgarbage.bytecodevisualizer_4.4.1.201408050542.jar" manifest="${docs.dir}/MANIFEST.MF">
+			<fileset dir="${build.dir}">
+				<include name="**/*.class" />
+				<exclude name="**/Test*.class" />
+			</fileset>
+		</jar>
+
+		<echo>Deleting the old Control Flow coverage jar file com.drgarbage.bytecodevisualizer_4.4.1.201408050542.jar in ${applet.lib.dir}</echo>
+		<delete includeemptydirs="false">
+			<fileset dir="${applet.lib.dir}" includes="com.drgarbage.bytecodevisualizer_4.4.1.201408050542.jar" />
+		</delete>
+
+		<copy file="${dist.dir}/com.drgarbage.bytecodevisualizer_4.4.1.201408050542.jar" todir="${applet.lib.dir}" />
+
+		<echo>Generating Control Flow coverage jar file com.drgarbage.bytecodevisualizer.plugin_4.4.1.201408050542.jar in ${dist.dir}...</echo>
+		<jar jarfile="${dist.dir}/com.drgarbage.bytecodevisualizer.plugin_4.4.1.201408050542.jar" manifest="${docs.dir}/MANIFEST.MF">
+			<fileset dir="${build.dir}">
+				<include name="**/*.class" />
+				<exclude name="**/Test*.class" />
+			</fileset>
+		</jar>
+
+		<echo>Deleting the old Control Flow coverage jar file com.drgarbage.bytecodevisualizer.plugin_4.4.1.201408050542.jar in ${applet.lib.dir}</echo>
+		<delete includeemptydirs="false">
+			<fileset dir="${applet.lib.dir}" includes="com.drgarbage.bytecodevisualizer.plugin_4.4.1.201408050542.jar" />
+		</delete>
+
+		<copy file="${dist.dir}/com.drgarbage.bytecodevisualizer.plugin_4.4.1.201408050542.jar" todir="${applet.lib.dir}" />
+
+		<echo>Generating Control Flow coverage jar file com.drgarbage.controlflowgraphfactory_4.4.1.201408050542.jar in ${dist.dir}...</echo>
+
+		<jar jarfile="${dist.dir}/com.drgarbage.controlflowgraphfactory_4.4.1.201408050542.jar" manifest="${docs.dir}/MANIFEST.MF">
+			<fileset dir="${build.dir}">
+				<include name="**/*.class" />
+				<exclude name="**/Test*.class" />
+			</fileset>
+		</jar>
+
+		<echo>Deleting the old Control Flow coverage jar file com.drgarbage.controlflowgraphfactory_4.4.1.201408050542.jar in ${applet.lib.dir}</echo>
+		<delete includeemptydirs="false">
+			<fileset dir="${applet.lib.dir}" includes="com.drgarbage.controlflowgraphfactory_4.4.1.201408050542.jar" />
+		</delete>
+
+		<copy file="${dist.dir}/com.drgarbage.controlflowgraphfactory_4.4.1.201408050542.jar" todir="${applet.lib.dir}" />
+
+		<echo>Generating Control Flow coverage jar file com.drgarbage.controlflowgraphfactory.plugin_4.4.1.201408050542.jarin ${dist.dir}...</echo>
+		<jar jarfile="${dist.dir}/com.drgarbage.controlflowgraphfactory.plugin_4.4.1.201408050542.jar" manifest="${docs.dir}/MANIFEST.MF">
+			<fileset dir="${build.dir}">
+				<include name="**/*.class" />
+				<exclude name="**/Test*.class" />
+			</fileset>
+		</jar>
+
+		<echo>Deleting the old Control Flow coverage jar file com.drgarbage.controlflowgraphfactory.plugin_4.4.1.201408050542.jar in ${applet.lib.dir}</echo>
+		<delete includeemptydirs="false">
+			<fileset dir="${applet.lib.dir}" includes="com.drgarbage.controlflowgraphfactory.plugin_4.4.1.201408050542.jar" />
+		</delete>
+
+		<copy file="${dist.dir}/com.drgarbage.controlflowgraphfactory.plugin_4.4.1.201408050542.jar" todir="${applet.lib.dir}" />
+
+		<echo>Generating Control Flow coverage jar file com.drgarbage.core.plugin_4.4.1.201408050542.jar in ${dist.dir}...</echo>
+		<jar jarfile="${dist.dir}/com.drgarbage.core.plugin_4.4.1.201408050542.jar" manifest="${docs.dir}/MANIFEST.MF">
+			<fileset dir="${build.dir}">
+				<include name="**/*.class" />
+				<exclude name="**/Test*.class" />
+			</fileset>
+		</jar>
+
+		<echo>Deleting the old Control Flow coverage jar file com.drgarbage.core.plugin_4.4.1.201408050542.jar in ${applet.lib.dir}</echo>
+		<delete includeemptydirs="false">
+			<fileset dir="${applet.lib.dir}" includes="com.drgarbage.core.plugin_4.4.1.201408050542.jar" />
+		</delete>
+
+		<copy file="${dist.dir}/com.drgarbage.core.plugin_4.4.1.201408050542.jar" todir="${applet.lib.dir}" />
+
+		<echo>Generating Control Flow coverage jar file com.drgarbage.asm_5.0.3.201408050542.jar in ${dist.dir}...</echo>
+		<jar jarfile="${dist.dir}/com.drgarbage.asm_5.0.3.201408050542.jar" manifest="${docs.dir}/MANIFEST.MF">
+			<fileset dir="${build.dir}">
+				<include name="**/*.class" />
+				<exclude name="**/Test*.class" />
+			</fileset>
+		</jar>
+
+		<echo>Deleting the old Control Flow coverage jar file com.drgarbage.asm_5.0.3.201408050542.jar in ${applet.lib.dir}</echo>
+		<delete includeemptydirs="false">
+			<fileset dir="${applet.lib.dir}" includes="com.drgarbage.asm_5.0.3.201408050542.jar" />
+		</delete>
+
+		<copy file="${dist.dir}/com.drgarbage.asm_5.0.3.201408050542.jar" todir="${applet.lib.dir}" />
+
+
+
+
+		<!--  artifacts content dependencies                                                 -->
+		<echo>Generating Control Flow coverage jar file artifacts.jar in ${dist.dir}...</echo>
+		<jar jarfile="${dist.dir}/artifacts.jar" manifest="${docs.dir}/MANIFEST.MF">
+			<fileset dir="${build.dir}">
+				<include name="**/*.class" />
+				<exclude name="**/Test*.class" />
+			</fileset>
+		</jar>
+
+		<echo>Deleting the old Control Flow coverage jar file artifacts.jar in ${applet.lib.dir}</echo>
+		<delete includeemptydirs="false">
+			<fileset dir="${applet.lib.dir}" includes="artifacts.jar" />
+		</delete>
+
+		<copy file="${dist.dir}/artifacts.jar" todir="${applet.lib.dir}" />
+
+		<echo>Generating Control Flow coverage jar file content.jar in ${dist.dir}...</echo>
+		<jar jarfile="${dist.dir}/content.jar" manifest="${docs.dir}/MANIFEST.MF">
+			<fileset dir="${build.dir}">
+				<include name="**/*.class" />
+				<exclude name="**/Test*.class" />
+			</fileset>
+		</jar>
+
+		<echo>Deleting the old Control Flow coverage jar file content.jar in ${applet.lib.dir}</echo>
+		<delete includeemptydirs="false">
+			<fileset dir="${applet.lib.dir}" includes="content.jar" />
+		</delete>
+
+		<copy file="${dist.dir}/content.jar" todir="${applet.lib.dir}" />
+
+
+		<!--  ===================================================================  -->
+		<!--  Adding File Upload Dependencies                               -->
+		<!--  ===================================================================  -->
+		<echo>Generating File Upload jar file commons-io-2.3.jar in ${dist.dir}...</echo>
+		<jar jarfile="${dist.dir}/commons-io-2.3.jar" manifest="${docs.dir}/MANIFEST.MF">
+			<fileset dir="${build.dir}">
+				<include name="**/*.class" />
+				<exclude name="**/Test*.class" />
+			</fileset>
+		</jar>
+
+		<echo>Deleting the old File upload jar file commons-io-2.3.jar in ${applet.lib.dir}</echo>
+		<delete includeemptydirs="false">
+			<fileset dir="${applet.lib.dir}" includes="commons-io-2.3.jar" />
+		</delete>
+
+		<copy file="${dist.dir}/commons-io-2.3.jar" todir="${applet.lib.dir}" />
+
+		<echo>Generating File Upload jar file commons-fileupload-1.2.2.jar in ${dist.dir}...</echo>
+		<jar jarfile="${dist.dir}/commons-fileupload-1.2.2.jar" manifest="${docs.dir}/MANIFEST.MF">
+			<fileset dir="${build.dir}">
+				<include name="**/*.class" />
+				<exclude name="**/Test*.class" />
+			</fileset>
+		</jar>
+
+		<echo>Deleting the old File upload jar file commons-fileupload-1.2.2.jar in ${applet.lib.dir}</echo>
+		<delete includeemptydirs="false">
+			<fileset dir="${applet.lib.dir}" includes="commons-fileupload-1.2.2.jar" />
+		</delete>
+
+		<copy file="${dist.dir}/commons-fileupload-1.2.2.jar" todir="${applet.lib.dir}" />
+
+	</target>
 
 	<!--  ===================================================================  -->
 	<!--  archive the whole project using tar                                  -->
 	<!--  ===================================================================  -->
 	<target name="tar" depends="init">
-		<delete file="${dist.dir}/coverage.tar"/>
-		<tar destfile="${dist.dir}/coverage.tar"
-		      basedir="${src.dir}"
-		      excludes="/work/**"
-		/>
+		<delete file="${dist.dir}/coverage.tar" />
+		<tar destfile="${dist.dir}/coverage.tar" basedir="${src.dir}" excludes="/work/**" />
 	</target>
-	
-<!--  ===================================================================  -->
-<!--  Creates the API documentation                                        -->
-<!--  ===================================================================  -->
-<target name="javadoc">
-    <mkdir dir="${docs.api.dir}" />
-	<echo>Creating the API documentation for coverage application at ${docs.api.dir}</echo>
-    <javadoc packagenames="${packages}" sourcepath="${src.dir}"
-             destdir="${docs.api.dir}" author="true" version="true"
-             windowtitle="${Name} ${version} API" doctitle="${Name}"
-             footer="Copyright &amp;copy; 2004-2008 George Mason University. See &lt;a target=&quot;_top&quot; href=&quot;../license.html&quot;&gt;license agreement&lt;/A&gt; for rights granted."> 
-    </javadoc>
-</target>
-	
+
+	<!--  ===================================================================  -->
+	<!--  Creates the API documentation                                        -->
+	<!--  ===================================================================  -->
+	<target name="javadoc">
+		<mkdir dir="${docs.api.dir}" />
+		<echo>Creating the API documentation for coverage application at ${docs.api.dir}</echo>
+		<javadoc packagenames="${packages}" sourcepath="${src.dir}" destdir="${docs.api.dir}" author="true" version="true" windowtitle="${Name} ${version} API" doctitle="${Name}" footer="Copyright &amp;copy; 2004-2008 George Mason University. See &lt;a target=&quot;_top&quot; href=&quot;../license.html&quot;&gt;license agreement&lt;/A&gt; for rights granted.">
+		</javadoc>
+	</target>
+
 	<!--  ===================================================================  -->
 	<!--  build the application                                                -->
 	<!--  ===================================================================  -->
-	<target name="build" depends="compile, javadoc, jar, tar" description="build the application"/>
+	<target name="build" depends="compile, javadoc, jar, tar" description="build the application" />
 
 	<!--  ===================================================================  -->
 	<!--  Deploy web application on the tomcat server                          -->
 	<!--  ===================================================================  -->
 
-    <target name="deploy" depends="init" description="deploy it on the tomcat">
-  		<input
-  			message="Please enter the directory to deploy:"
-  			addproperty="install.dir"/>
+	<target name="deploy" depends="init" description="deploy it on the tomcat">
+		<input message="Please enter the directory to deploy:" addproperty="install.dir" />
 
-    	<fail message="Can not find the directory: ${install.dir}">
-    		<condition>
-    			<not><available file="${install.dir}" type="dir"/>    			
-    			</not>
-    		</condition>
-    	</fail>
-    	
-    	<input message="Do you want to overwrite ${install.dir}/web.xml? (y/n)" addproperty="isoverwrite"/>
-    	
-    	<condition property="overwrite">
-    		<equals arg1="y" arg2="${isoverwrite}"/>
-    	</condition>
-    	
-    	<antcall target="echo.msg"/>
-    	
-    	<echo> Deploying coverage application at ${install.dir}</echo>
-    	<mkdir dir="${install.dir}/coverage"/>
-    	<mkdir dir="${install.dir}/coverage/lib"/>
-    	<mkdir dir="${install.dir}/WEB-INF"/>
-    	<mkdir dir="${install.dir}/WEB-INF/lib"/>
-    	
-    	<copy todir="${install.dir}/coverage">
-    		 <fileset dir="${applet.dest.dir}">
-    		      <include name="**/*"/>
-    		 </fileset>
-    	</copy>
-    	
-    	<copy todir="${install.dir}/WEB-INF/lib">
-    		 <fileset dir="${lib.dir}">
-    		      <include name="*.jar"/>
-				  <exclude name="servlet.jar"/>
-    		 </fileset>
-    	</copy>
-    	
-    	<copy file="${dist.dir}/graph.jar" todir="${install.dir}/WEB-INF/lib"/>
-    	
-    	<echo>Overwriting the old ${install.dir}/WEB-INF/web.xml</echo>
-    	<antcall target="copy.webxml"/>
-    	 
-    </target>
-	
+		<fail message="Can not find the directory: ${install.dir}">
+			<condition>
+				<not>
+					<available file="${install.dir}" type="dir" />
+				</not>
+			</condition>
+		</fail>
+
+		<input message="Do you want to overwrite ${install.dir}/web.xml? (y/n)" addproperty="isoverwrite" />
+
+		<condition property="overwrite">
+			<equals arg1="y" arg2="${isoverwrite}" />
+		</condition>
+
+		<antcall target="echo.msg" />
+
+		<echo> Deploying coverage application at ${install.dir}</echo>
+		<mkdir dir="${install.dir}/coverage" />
+		<mkdir dir="${install.dir}/coverage/lib" />
+		<mkdir dir="${install.dir}/WEB-INF" />
+		<mkdir dir="${install.dir}/WEB-INF/lib" />
+
+		<copy todir="${install.dir}/coverage">
+			<fileset dir="${applet.dest.dir}">
+				<include name="**/*" />
+			</fileset>
+		</copy>
+
+		<copy todir="${install.dir}/WEB-INF/lib">
+			<fileset dir="${lib.dir}">
+				<include name="*.jar" />
+				<exclude name="servlet.jar" />
+			</fileset>
+		</copy>
+
+		<copy file="${dist.dir}/graph.jar" todir="${install.dir}/WEB-INF/lib" />
+
+		<copy file="${dist.dir}/org.eclipse.draw2d_3.9.0.201212170307.jar" todir="${install.dir}/WEB-INF/lib" />
+		<copy file="${dist.dir}/org.eclipse.equinox.common-3.6.0.v20100503.jar" todir="${install.dir}/WEB-INF/lib" />
+		<copy file="${dist.dir}/org.eclipse.jdt.core-3.10.0.v20140604-1726.jar" todir="${install.dir}/WEB-INF/lib" />
+		<copy file="${dist.dir}/org.eclipse.jface.jar" todir="${install.dir}/WEB-INF/lib" />
+		<copy file="${dist.dir}/org.eclipse.osgi-3.7.1.jar" todir="${install.dir}/WEB-INF/lib" />
+		<copy file="${dist.dir}/org.eclipse.swt.win32.win32.x86_64-4.3.jar" todir="${install.dir}/WEB-INF/lib" />
+		<copy file="${dist.dir}/org.eclipse.ui.views_3.2.1.M20060906-0800.jar" todir="${install.dir}/WEB-INF/lib" />
+		<copy file="${dist.dir}/workbench-3.3.0-I20070608-1100.jar" todir="${install.dir}/WEB-INF/lib" />
+
+		<copy file="${dist.dir}/com.drgarbage.asm_5.0.3.jar" todir="${install.dir}/WEB-INF/lib" />
+		<copy file="${dist.dir}/com.drgarbage.asm.util_5.0.3.jar" todir="${install.dir}/WEB-INF/lib" />
+
+		<copy file="${dist.dir}/com.drgarbage.controlflowgraphfactory_4.4.1.201408050542.jar" todir="${install.dir}/WEB-INF/lib" />
+		<copy file="${dist.dir}/com.drgarbage.sourcecodevisualizer_4.4.0.201408050542.jar" todir="${install.dir}/WEB-INF/lib" />
+
+		<copy file="${dist.dir}/com.drgarbage.asm_5.0.3.201408050542.jar" todir="${install.dir}/WEB-INF/lib" />
+		<copy file="${dist.dir}/com.drgarbage.bytecodevisualizer_4.4.1.201408050542.jar" todir="${install.dir}/WEB-INF/lib" />
+		<copy file="${dist.dir}/com.drgarbage.bytecodevisualizer.plugin_4.4.1.201408050542.jar" todir="${install.dir}/WEB-INF/lib" />
+		<copy file="${dist.dir}/com.drgarbage.controlflowgraphfactory_4.4.1.201408050542.jar" todir="${install.dir}/WEB-INF/lib" />
+		<copy file="${dist.dir}/com.drgarbage.controlflowgraphfactory.plugin_4.4.1.201408050542.jar" todir="${install.dir}/WEB-INF/lib" />
+		<copy file="${dist.dir}/com.drgarbage.core.plugin_4.4.1.201408050542.jar" todir="${install.dir}/WEB-INF/lib" />
+		<copy file="${dist.dir}/com.drgarbage.asm_5.0.3.201408050542.jar" todir="${install.dir}/WEB-INF/lib" />
+
+		<copy file="${dist.dir}/artifacts.jar" todir="${install.dir}/WEB-INF/lib" />
+		<copy file="${dist.dir}/content.jar" todir="${install.dir}/WEB-INF/lib" />
+
+		<copy file="${dist.dir}/commons-io-2.3.jar" todir="${install.dir}/WEB-INF/lib" />
+		<copy file="${dist.dir}/commons-fileupload-1.2.2.jar" todir="${install.dir}/WEB-INF/lib" />
+		<copy file="${dist.dir}/com.drgarbage.sourcecodevisualizer.plugin_4.4.0.201408050542.jar" todir="${install.dir}/WEB-INF/lib" />
+
+		<echo>Overwriting the old ${install.dir}/WEB-INF/web.xml</echo>
+		<antcall target="copy.webxml" />
+
+	</target>
+
 	<target name="copy.webxml" if="overwrite">
 		<echo>Overwriting the old web.xml ...</echo>
-		<copy file="${webinf.dir}/web.xml" todir="${install.dir}/WEB-INF"/>
+		<copy file="${webinf.dir}/web.xml" todir="${install.dir}/WEB-INF" />
 	</target>
-	
+
 	<target name="echo.msg" unless="overwrite">
 		<echo>You choose not to overwrite the ${install.dir}/WEB-INF/web.xml. You need to modify the old web.xml manually. 
 		You need to copy the servlet mapping in the ${webinf.dir}/web.xml to the your web.xml.</echo>
 	</target>
-	
+
 </project>
