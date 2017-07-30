@@ -539,7 +539,7 @@
 		<copy todir="${install.dir}/WEB-INF/lib">
 			<fileset dir="${lib.dir}">
 				<include name="*.jar" />
-				<exclude name="servlet.jar" />
+				<exclude name="javax.servlet-api-3.0.1.jar" />
 			</fileset>
 		</copy>
 
