@@ -1,19 +1,24 @@
 package coverage.web;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.regex.Pattern;
 
+import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
+import javax.servlet.annotation.MultipartConfig;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.Part;
 
 import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.fileupload.FileItemFactory;
@@ -55,6 +60,7 @@ import coverage.web.enums.TestRequirements;
  *         Modified by Jenifer Cochran
  * 
  */
+@MultipartConfig
 public class GraphCoverage extends HttpServlet
 {
 
@@ -64,7 +70,7 @@ public class GraphCoverage extends HttpServlet
     static String title;
     static String initialNode;
     static String endNode;
-    static List<String> methodsList;
+    static List<String> methodsList = new ArrayList<String>();
     // numbers of infeasible prime paths
     static String infeasiblePrimePaths;
     // number of infeasible edge-pairs
@@ -108,17 +114,91 @@ public class GraphCoverage extends HttpServlet
 
     public void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException
     {
-        response.setContentType("text/html");
-        PrintWriter out = response.getWriter();
+//        response.setContentType("text/html");
         String result = this.getHeader();
+        
+        String action           = null;
+        String initialNodeStr   = null;
+        String edgesStr         = null;
+        String endNodeStr       = null;
+        String importJavaAction = null;
+
+        
+        String contentType = request.getContentType();
+        if(contentType != null && contentType.indexOf("multipart/form-data") != -1)
+        {
+            // Create a factory for disk-based file items
+            DiskFileItemFactory factory = new DiskFileItemFactory();
+
+            // Configure a repository (to ensure a secure temp location is used)
+            ServletContext servletContext = this.getServletConfig().getServletContext();
+            File repository = (File) servletContext.getAttribute("javax.servlet.context.tempdir");
+            factory.setRepository(repository);
+            
+           
+            // Create a new file upload handler
+            ServletFileUpload upload = new ServletFileUpload(factory);
+            HashMap<String, String> parameterMap = new HashMap<>();
+            // Parse the request
+            try
+            {
+                List<FileItem> items = upload.parseRequest(request);
+             // Process the uploaded items
+                Iterator<FileItem> iter = items.iterator();
+                while (iter.hasNext()) {
+                    FileItem item = iter.next();
+
+                    if (item.isFormField()) 
+                    {
+                        String name = item.getFieldName();
+                        String value = item.getString();
+
+                        if(parameterMap.containsKey(name) == false)
+                        {
+                            if(value.equals(""))
+                            {
+                                value = null;
+                            }
+                            parameterMap.put(name, value);
+                        }
+                    }
+                    else 
+                    {
+                        result += ExecuteImportJavaFile(item, request);
+                        String fieldName = item.getFieldName();
+                        String fileName = item.getName();
+                        String contentType2 = item.getContentType();
+                        boolean isInMemory = item.isInMemory();
+                        long sizeInBytes = item.getSize();
+                    }
+                }
+            }
+            catch (FileUploadException e)
+            {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+
+            action           = parameterMap.get("action");
+            initialNodeStr   = parameterMap.get("initialNode");
+            edgesStr         = parameterMap.get("edges");
+            endNodeStr       = parameterMap.get("endNode");
+            importJavaAction = parameterMap.get("importJavaFile");
+        }
+        else
+        {
+            action           = request.getParameter("action");
+            initialNodeStr   = request.getParameter("initialNode");
+            edgesStr         = request.getParameter("edges");
+            endNodeStr       = request.getParameter("endNode");
+            importJavaAction = request.getParameter("importJavaFile");
+        }
+      
+        
+        PrintWriter out = response.getWriter();
 
         showShareButton = false;
-
-        String action           = request.getParameter("action");
-        String initialNodeStr   = request.getParameter("initialNode");
-        String edgesStr         = request.getParameter("edges");
-        String endNodeStr       = request.getParameter("endNode");
-        String importJavaAction = request.getParameter("importJavaFile");
+       
 
         // build hidden link
         hiddenLink = HiddenLinkUtility.BuildHiddenLink(edgesStr, 
@@ -126,11 +206,6 @@ public class GraphCoverage extends HttpServlet
         											   endNodeStr,
         											   action,
         											   request.getParameter("algorithm2") != null ? request.getParameter("algorithm2") : null);
-        
-       if(importJavaAction != null)
-       {
-           result += ExecuteImportJavaFile(request);
-       }
 
         if(action != null)
         {
@@ -259,41 +334,28 @@ public class GraphCoverage extends HttpServlet
         out.println(result);
     }
 
-    private String ExecuteImportJavaFile(HttpServletRequest request)
+    private String ExecuteImportJavaFile(FileItem file, HttpServletRequest request)
     {
         String selectedMethod = request.getParameter("selectedMethod");
-        
-        FileItemFactory factory = new DiskFileItemFactory();
-        ServletFileUpload upload = new ServletFileUpload(factory);
-        
-        try 
+
+        String contentType = request.getContentType();
+        if(contentType == null || contentType.indexOf("multipart/form-data") == -1)
         {
-            List<FileItem> fields = upload.parseRequest(request);
-            for(FileItem file : fields)
-            {
-                try (InputStream inputStream = file.getInputStream()) 
-                {
-                    ClassFile classDoc = ClassFile.readClass(inputStream);
-                    methodsList.clear();
-                    for(IMethodSection method : classDoc.getMethodSections())
-                    {
-                        methodsList.add(String.format("Name: %s Descriptor: %s", method.getName(), method.getDescriptor()));
-                    }
-                }
-                catch (IOException e)
-                {
-                    e.printStackTrace();
-                }
-            }            
-        
+            return "";
         }
-        catch (FileUploadException e)
+            
+        try (InputStream inputStream = file.getInputStream()) 
+        {
+            ClassFile classDoc = ClassFile.readClass(inputStream);
+            methodsList.clear();
+            for(IMethodSection method : classDoc.getMethodSections())
+            {
+                methodsList.add(String.format("Name: %s Descriptor: %s", method.getName(), method.getDescriptor()));
+            }
+        }
+        catch (IOException e)
         {
             e.printStackTrace();
-        }
-        finally
-        {
-            
         }
         return "";
     }
@@ -771,9 +833,9 @@ public class GraphCoverage extends HttpServlet
         paths = null;
         infeasiblePrimePaths = "";
         infeasibleEdgePairs = "";
-        List<String> test = Arrays.asList("val", "Val2");
-        methodsList = new ArrayList<String>();
-        return printEdgeForm("", "", "", test);
+        
+        
+        return printEdgeForm("", "", "", methodsList);
     }
 
     private String ExecuteAlgorithm2(String algorithm2Action, String action, HttpServletRequest request) throws IOException
@@ -1959,17 +2021,17 @@ public class GraphCoverage extends HttpServlet
     private String printEdgeForm(String edges, String initialNode, String endNode, List<String> methods)
     {
                             //Title
-        String form = "" + "<form name = \"graphCoverageForm\" method=\"post\" action=\"GraphCoverage\">\n"
+        String form = "" + "<form name = \"graphCoverageForm\" method=\"post\" action=\"GraphCoverage\"  enctype=\"multipart/form-data\" >\n"
                          + "<div style=\"text-align:center; font-weight:bold; font-size:125%\">Graph Information</div>\n"
                          // Import java file button
-                         + "<div style=\"text-align:center;\">"
-                             +"<td align=right width=\\\"15%\\\" >Upload Graph from Java file:</td>\n"
-                             + "<input type=\"file\" value=\"Import Graph from Java .class File\" name=\"importJavaFile\" value=\"importJavaFileAction\">"
-                             +"<input type=\"submit\" action=\"import graph\" />"
-                             +"<select name =\"selectedMethod\">"
-                               +"<option selected disabled>Choose Method Here</option>"
-                               + CreateMethodOptions(methods) 
-                             + "</select>"
+                         + "<div style=\"text-align:center;\" name = \"javaImportSection\">"
+                                 +"<td align=right width=\"15%\" >Upload Graph from Java file:</td>\n"
+                                 + "<input type=\"file\" value=\"Import Graph from Java .class File\" name=\"importJavaFileAction\" enc id=\"file\"/>"
+                                 + "<input value=\"Build Graph\" type=\"submit\" name=\"importJavaFile\" id=\"upload\"  />"
+                                 +"<select name =\"selectedMethod\">"
+                                   +"<option selected disabled>Choose Method Here</option>"
+                                   + CreateMethodOptions(methods) 
+                                 + "</select>"
                          + "</div>\n"
                          + "<table id = \"tableForm\" border=\"1\" width=\"100%\" cellspacing=\"0\" cellpadding=\"0\"  bgcolor=\"#EEFFEE\">\n"
                          + "<tr>\n" + "  <td width=\"33%\">\n" + "    <table border=\"0\">\n" + "      <tr>\n" + "        <td>\n"
