@@ -660,7 +660,7 @@ public class GraphUtil {
 	 * a vertex of the new prefix graph represents a path of the list
 	 * a new edge is created in the new prefix graph if there is any overlapping between two vertices
 	 * the weight of the edge is the prefix of the overlapping path
-	 * @param g
+	 * @param graphToShow
 	 * @return a prefix graph
 	 */
 	public static Graph getPrefixGraph(List<Path> listOfPaths){
