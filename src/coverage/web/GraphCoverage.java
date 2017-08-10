@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
 import javax.servlet.ServletContext;
@@ -23,6 +24,7 @@ import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.fileupload.FileUploadException;
 import org.apache.commons.fileupload.disk.DiskFileItemFactory;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
+import org.eclipse.draw2d.graph.Edge;
 
 import com.drgarbage.asm.ClassReader;
 import com.drgarbage.asm.render.intf.IMethodSection;
@@ -351,6 +353,8 @@ public class GraphCoverage extends HttpServlet
         initialNode = "";
         endNode = "";
         edges = "";
+
+        graphToShow = new Graph();
         
         String edgesString = "";
         //initial and end nodes
@@ -366,13 +370,21 @@ public class GraphCoverage extends HttpServlet
                 endNode += vertex.getId() + " ";
             }           
         }
+
         //edges
         for(Connection edge : getEdges(diagram.getChildren()))
         {
-            edgesString += String.format("%d %d\n", edge.getSource().getId(), edge.getTarget().getId());
+            edgesString += String.format("%d %d %s\n", edge.getSource().getId(), edge.getTarget().getId(), edge.getLabel());
+            
+            Node start       = graphToShow.createNode(edge.getSource().getId());
+            Node destination = graphToShow.createNode(edge.getTarget().getId());
+            String label     = edge.getLabel(); 
+            
+            graphToShow.createEdge(start, destination, label);
         }      
         
         edges = edgesString;
+        
         
         
         
@@ -2082,11 +2094,23 @@ public class GraphCoverage extends HttpServlet
                 nodeStr += "'});\n";
             }
         }
-
-        for(Path edge : edgePaths)
+        
+        List<coverage.graph.Edge> existingEdges = graphToShow.getEdges();
+        
+        
+        for(final Path edge : edgePaths)
         {
+            String label = "";
+            
+            coverage.graph.Edge existingEdge = this.findEdge(edge.get(0), edge.get(1), existingEdges);
+            if(existingEdge != null)
+            {
+                label = existingEdge.getLabel();                
+            }
+            
             // System.out.println(edge);
-            edgeStr += "graph.newEdge( node" + edge.get(0) + ", node" + edge.get(1) + ");\n";
+            edgeStr += "graph.newEdge( node" + edge.get(0) + ", node" + edge.get(1) + ", {label: '"+ label +"'}" +");\n";
+            
 
         }
 
@@ -2121,7 +2145,32 @@ public class GraphCoverage extends HttpServlet
 
         return result;
     }
-    
+
+    public coverage.graph.Edge findEdge(Node node, Node node2, List<coverage.graph.Edge> existingEdges)
+    {
+        
+        for(coverage.graph.Edge existingEdge : existingEdges)
+        {
+            //if node equals the edge source and node2 is the edge's destination
+            if(node.equals(existingEdge.getSrc()))
+            {
+                if(node2.equals(existingEdge.getDest()))
+                {
+                    return existingEdge;
+                }
+            }  
+          //if node equals the edge destination and node2 is the edge's source
+            else if(node.equals(existingEdge.getDest()))
+            {
+                if(node2.equals(existingEdge.getSrc()))
+                {
+                    return existingEdge;
+                }
+            }
+        }
+        //no match was found
+        return null;                                                 
+    }
 
     // Effects: return a html page of Graph Coverage Computation Web Application
     private String printEdgeForm(String edges, String initialNode, String endNode, List<String> methods)
@@ -2129,12 +2178,13 @@ public class GraphCoverage extends HttpServlet
                             //Title
         String form = "" + "<form name = \"graphCoverageForm\" method=\"post\" action=\"GraphCoverage\"  enctype=\"multipart/form-data\" >\n"
                          + "<div style=\"text-align:center; font-weight:bold; font-size:125%\">Graph Information</div>\n"
-                         // Import java file button
+                         // Import java file section
                          + "<div style=\"text-align:center;\" name = \"javaImportSection\">"
                                  +"<td align=right width=\"15%\" >Upload Graph from Java file:</td>\n"
+                                 //file input
                                  + "<input type=\"file\" value=\"Import Graph from Java .class File\" name=\"importJavaFileAction\" enc id=\"file\"/>"
-                                 + "<input value=\"Read File\" type=\"submit\" name=\"importJavaFile\" id=\"upload\"  />"
-                                 
+                                 //Read file button
+                                 + "<input value=\"Read File\" type=\"submit\" name=\"importJavaFile\" id=\"upload\"  />"                                 
                                  //Method selector section
                                  +"<p " + SetVisibilityOfMethodDropDown(methods) +"> "
                                          //Method drop down list

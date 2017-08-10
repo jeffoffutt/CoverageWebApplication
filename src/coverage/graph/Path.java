@@ -72,10 +72,17 @@ public class Path {
     */
    public List<Edge> getEdgeList()
    {
+       
 	   List<Edge> edges = new ArrayList<Edge>();
 	   if(size() > 1)
-		   for(int i = 0;i < path.size()-1;i++)
-			   edges.add(new Edge(path.get(i), path.get(i+1)));
+	   {
+	       for(int i = 0;i < path.size()-1;i++)
+	       {   
+	           
+	           edges.add(new Edge(path.get(i), path.get(i+1)));
+	       }
+	   }
+	   
 	   
 	   return edges;
    }

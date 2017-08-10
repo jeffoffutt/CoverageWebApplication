@@ -16,6 +16,7 @@ public class Edge{
    Object weight; // weight of the edge could be a path such as [1, 2, 3]; could be used in prefix graph
    int capacity; // the capacity of the edge; only used for flow problems
    int flow; // the flow of the edge; only used for flow problems
+   private String label;
 
    /**
     * if want to create edge outside of this package, please call GraphBase.createEdge
@@ -65,6 +66,20 @@ public class Edge{
       this.flow = flow;
       src.addOutGoing(this); //add edge into outgoing edge list of source node
    }
+   
+   /**
+    * the constructor
+    * @param s
+    * @param d
+    * @param label The label of the edge
+    */
+   Edge(Node s, Node d, String label)
+   {
+      src  = s;
+      dest = d;
+      this.label = label;
+      src.addOutGoing(this); //add edge into outgoing edge list of source node
+   }
    /**
     * 
     * @return the source node
@@ -97,6 +112,11 @@ public class Edge{
    public int getCapacity()
    {
       return capacity;
+   }
+   
+   public String getLabel()
+   {
+       return this.label;
    }
    
    /**

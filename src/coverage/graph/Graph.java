@@ -5,6 +5,7 @@ import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import coverage.web.InvalidInputException;
 
@@ -1217,6 +1218,7 @@ public class Graph extends GraphBase{
 	 */
 	public List<Path> findEdges(){
 		List<Path> edgesPath = new ArrayList<Path>();
+		
 		for (int i = 0; i < edges.size(); i++)
 	   {
 			Path p = new Path(edges.get(i));
@@ -1501,6 +1503,11 @@ public class Graph extends GraphBase{
 			}//end for loop of varialbe i
 		}//end if
 		return primePathsCopy;
+	}
+	
+	public List<Edge> getEdges()
+	{
+	    return new ArrayList<Edge>(this.edges);
 	}
 	/*
 	 * Effects: return edge-pair requirements of a graph without marked infeasible edge-pairs

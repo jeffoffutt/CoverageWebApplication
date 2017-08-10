@@ -31,7 +31,8 @@ public class GraphUtil {
 	// For example: x,1; x 2......
 	// defusePat represents ([a-zA-Z]|[0-9])* followed by ((,|\\x20)([a-zA-Z]|[0-9])*)*
 	// For example: x,1,2; x 1 2......
-	public static final String edgePat = "([a-zA-Z]|[0-9])+(,|(\\x20)+)([a-zA-Z]|[0-9])+";
+    // ? means one or none
+	public static final String edgePat = "([a-zA-Z]|[0-9])+(,|(\\x20)+)([a-zA-Z]|[0-9])+(,|(\\x20)+([a-zA-Z0-9])*)?";
 	private static final String defusePat = "([a-zA-Z]|[0-9])+((,|(\\x20)+)([a-zA-Z]|[0-9])+)+";
 	private static final String infeasibleSubpathsPat = "[0-9]+(,(\\x20)*[0-9]+(\\x20)*)*(;(\\x20)*[0-9]+(,(\\x20)*[0-9]+(\\x20)*)*)*";
 	// Lin added it for checking node input
@@ -403,7 +404,12 @@ public class GraphUtil {
 				//create the source node and destination node 
 				Node srcNode = g.createNode(src);
 				Node desNode = g.createNode(newNodes.nextToken());
-				g.addEdge(new Edge(srcNode, desNode));
+				String label = "";
+				if(newNodes.hasMoreTokens())
+				{
+				    label = newNodes.nextToken();
+				}
+				g.addEdge(new Edge(srcNode, desNode, label));
 			}
 			//get and set an initial node for the graph
 		//	Node initial = g.createNode(initialNode);

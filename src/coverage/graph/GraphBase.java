@@ -112,36 +112,47 @@ public abstract class GraphBase {
 	 */
 	public Edge createEdge(Node s, Node d)
 	{
-		//check whether the edge has existed in the graph
-		Iterator<Edge> outEdges = null;
-		Node src = null;
-		for(Node node: nodes){
-			if(node.equals(s)){
-				src = node;
-				outEdges = node.getOutGoingIterator();
-				break;
-			}
-		}
-		
-		if(outEdges != null){
-			while(outEdges.hasNext())
-			{
-				Edge e = outEdges.next();
-				if(d.equals(e.getDest()))
-					return e;
-			}
-		}
-		
-		//return a new edge
-		Edge e = null;
-		if(src != null)
-			e = new Edge(src, d);
-		else
-			e = new Edge(s, d);
-		edges.add(e);
-		
-		return e;
+		return this.createEdge(s, d, "");
 	}
+	
+	/**
+     * 
+     * @param s
+     * @param d
+     * @return existed edge if it exists in graph, otherwise create a new edge and add it into graph
+     */
+    public Edge createEdge(Node s, Node d, String label)
+    {
+        //check whether the edge has existed in the graph
+        Iterator<Edge> outEdges = null;
+        Node src = null;
+        for(Node node: nodes){
+            if(node.equals(s)){
+                src = node;
+                outEdges = node.getOutGoingIterator();
+                break;
+            }
+        }
+        
+        if(outEdges != null){
+            while(outEdges.hasNext())
+            {
+                Edge e = outEdges.next();
+                if(d.equals(e.getDest()))
+                    return e;
+            }
+        }
+        
+        //return a new edge
+        Edge e = null;
+        if(src != null)
+            e = new Edge(src, d, label);
+        else
+            e = new Edge(s, d, label);
+        edges.add(e);
+        
+        return e;
+    }
 	
 	/**
 	 * 
