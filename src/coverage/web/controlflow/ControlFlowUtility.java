@@ -1,16 +1,19 @@
 package coverage.web.controlflow;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+
+import javax.servlet.http.HttpServletRequest;
+
+import org.apache.commons.fileupload.FileItem;
 
 import com.drgarbage.asm.ClassReader;
+import com.drgarbage.asm.render.intf.IMethodSection;
 import com.drgarbage.asm.visitor.FilteringCodeVisitor;
 import com.drgarbage.asm.visitor.MethodFilteringVisitor;
 import com.drgarbage.controlflowgraph.ControlFlowGraphException;
@@ -18,31 +21,11 @@ import com.drgarbage.visualgraphic.model.Connection;
 import com.drgarbage.visualgraphic.model.ControlFlowGraphDiagram;
 import com.drgarbage.visualgraphic.model.VertexBase;
 
-import coverage.graph.utility.HiddenLinkUtility;
 import coverage.web.controlflow.diagram.ClassFile;
 import coverage.web.controlflow.diagram.ControlFlowDiagramGraphFactory;
 
 public class ControlFlowUtility
 {
-
-    public static ControlFlowGraphDiagram exportJavaFile(Path javaFileLocation) throws FileNotFoundException, IOException, ControlFlowGraphException
-    {
-        File file = javaFileLocation.toFile();
-
-        try (FileInputStream inputStream = new FileInputStream(file))
-        {
-            ClassFile classDoc = ClassFile.readClass(inputStream);
-            // TODO allow user to select the method
-
-            FilteringCodeVisitor methodInstructions = getInstructionList(file.getAbsolutePath(),
-                    classDoc.getMethodSections().get(1).getName(), classDoc.getMethodSections().get(1).getDescriptor());
-
-            ControlFlowGraphDiagram diagramFromFile = ControlFlowDiagramGraphFactory
-                    .buildBasicblockGraphDiagram(methodInstructions.getInstructions());
-
-            return diagramFromFile;
-        }
-    }
     
     /***
      * Returns the instructions for a given method in a java .class file
@@ -54,76 +37,79 @@ public class ControlFlowUtility
      * @throws ControlFlowGraphException
      * @throws IOException
      */
-    public static FilteringCodeVisitor getInstructionList(String filePath,
-                                                           String methodName, 
-                                                           String methodSig) throws ControlFlowGraphException, IOException 
+    public static FilteringCodeVisitor getInstructionList(FileItem file,
+                                                          String   methodName, 
+                                                          String   methodSig) throws ControlFlowGraphException, IOException 
     {
-        try(InputStream fileInputStream = new FileInputStream(filePath))
-        {
-            FilteringCodeVisitor   codeVisitor  = new FilteringCodeVisitor(methodName,  methodSig);     
-            MethodFilteringVisitor classVisitor = new MethodFilteringVisitor(codeVisitor);
-            ClassReader            classReader  = new ClassReader(fileInputStream, classVisitor);
-            
-            classReader.accept(classVisitor, 0);
-            
-            if (codeVisitor.getInstructions() == null) 
-            {
-                throw new ControlFlowGraphException("ControlFlowGraphGenerator: can't get method info of the " + methodName + methodSig);
-
-            }
-
-            return codeVisitor;
-        }       
+           try(InputStream fileInputStream = file.getInputStream())
+           {
+               FilteringCodeVisitor   codeVisitor  = new FilteringCodeVisitor(methodName,  methodSig);     
+               MethodFilteringVisitor classVisitor = new MethodFilteringVisitor(codeVisitor);
+               ClassReader            classReader  = new ClassReader(fileInputStream, classVisitor);
+               
+               classReader.accept(classVisitor, 0);
+               
+               if (codeVisitor.getInstructions() == null) 
+               {
+                   throw new ControlFlowGraphException("ControlFlowGraphGenerator: can't get method info of the " + methodName + methodSig);
+    
+               }
+    
+               return codeVisitor; 
+           }                 
     }
-
-    public String convertDiagramToLink(ControlFlowGraphDiagram diagram)
+    
+    
+    public static Map<String, ControlFlowGraphDiagram> createControlFlowGraphMap(FileItem file, HttpServletRequest request)
     {
-        String endNodeString = "";
-        String edgesString = "";
-        String initialNodeString = "";
-        String actionString = "Nodes";
-        String algorithm2String = "";
-        // initial and end nodes
-        for (VertexBase vertex : diagram.getChildren())
+        Map<String, ControlFlowGraphDiagram> graphMap = new HashMap<String, ControlFlowGraphDiagram>();
+        String contentType = request.getContentType();
+        if(contentType == null || contentType.indexOf("multipart/form-data") == -1 || file.getSize() <= 0)
         {
-            String label = vertex.getLabel();
-            if (label.equals("START"))
+            return graphMap;
+        }
+            
+        try (InputStream inputStream = file.getInputStream()) 
+        {
+            ClassFile classDoc = ClassFile.readClass(inputStream);
+            for(IMethodSection method : classDoc.getMethodSections())
             {
-                initialNodeString += vertex.getId() + " ";
-            }
-            else if (label.equals("EXIT"))
-            {
-                endNodeString += vertex.getId() + " ";
+                String methodKey = String.format("Name: %s Descriptor: %s", method.getName(), method.getDescriptor());
+                
+                FilteringCodeVisitor methodInstructions = ControlFlowUtility.getInstructionList(file, method.getName(), method.getDescriptor());
+                graphMap.put(methodKey, ControlFlowDiagramGraphFactory.buildBasicblockGraphDiagram(methodInstructions.getInstructions()));
             }
         }
-        // edges
-        for (Connection edge : getEdges(diagram.getChildren()))
+        catch (IOException e)
         {
-            edgesString += String.format("%d %d\n", edge.getSource().getId(), edge.getTarget().getId());
+            e.printStackTrace();
         }
-
-        // https://cs.gmu.edu:8443/offutt/coverage/GraphCoverage?edges=1+2%0D%0A2+3%0D%0A2+4%0D%0A3+5%0D%0A4+5%0D%0A&initialNode=1&endNode=5&action=Node%20Coverage
-        return HiddenLinkUtility.BuildHiddenLink(edgesString, initialNodeString, endNodeString, actionString,
-                algorithm2String);
+        catch (ControlFlowGraphException e)
+        {
+            e.printStackTrace();
+        }
+        
+        return graphMap;
     }
 
-    private static List<Connection> getEdges(List<VertexBase> vertices)
+
+    public static List<Connection> getEdges(List<VertexBase> vertices)
     {
         List<Connection> connections = new ArrayList<Connection>();
         Iterator<VertexBase> it = vertices.iterator();
         VertexBase vb = null;
-        while (it.hasNext())
+        while(it.hasNext())
         {
-            vb = it.next();
+            vb = it.next();         
             /* build connection list */
             List<Connection> targetConnection = vb.getTargetConnections();
             Iterator<Connection> itTargetConnections = targetConnection.iterator();
-            while (itTargetConnections.hasNext())
+            while(itTargetConnections.hasNext())
             {
                 connections.add(itTargetConnections.next());
             }
         }
-
+        
         return connections;
     }
 }

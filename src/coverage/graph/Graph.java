@@ -1505,10 +1505,6 @@ public class Graph extends GraphBase{
 		return primePathsCopy;
 	}
 	
-	public List<Edge> getEdges()
-	{
-	    return new ArrayList<Edge>(this.edges);
-	}
 	/*
 	 * Effects: return edge-pair requirements of a graph without marked infeasible edge-pairs
 	 */
@@ -2867,6 +2863,11 @@ public class Graph extends GraphBase{
 	{
 		return new DFGraph(nodes, edges, starts, ends);
 	}
+    public List<Edge> getEdges()
+    {
+        // TODO Auto-generated method stub
+        return null;
+    }
 	
 
 }

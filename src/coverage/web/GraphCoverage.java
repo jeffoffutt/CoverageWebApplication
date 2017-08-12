@@ -2,7 +2,6 @@ package coverage.web;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -10,7 +9,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
 import javax.servlet.ServletContext;
@@ -24,13 +22,7 @@ import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.fileupload.FileUploadException;
 import org.apache.commons.fileupload.disk.DiskFileItemFactory;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
-import org.eclipse.draw2d.graph.Edge;
 
-import com.drgarbage.asm.ClassReader;
-import com.drgarbage.asm.render.intf.IMethodSection;
-import com.drgarbage.asm.visitor.FilteringCodeVisitor;
-import com.drgarbage.asm.visitor.MethodFilteringVisitor;
-import com.drgarbage.controlflowgraph.ControlFlowGraphException;
 import com.drgarbage.visualgraphic.model.Connection;
 import com.drgarbage.visualgraphic.model.ControlFlowGraphDiagram;
 import com.drgarbage.visualgraphic.model.VertexBase;
@@ -40,9 +32,9 @@ import coverage.graph.GraphUtil;
 import coverage.graph.InvalidGraphException;
 import coverage.graph.Node;
 import coverage.graph.Path;
+import coverage.graph.utility.GraphCoverageUtility;
 import coverage.graph.utility.HiddenLinkUtility;
-import coverage.web.controlflow.diagram.ClassFile;
-import coverage.web.controlflow.diagram.ControlFlowDiagramGraphFactory;
+import coverage.web.controlflow.ControlFlowUtility;
 import coverage.web.enums.GraphInput;
 import coverage.web.enums.OtherTools;
 import coverage.web.enums.TestPaths;
@@ -106,31 +98,25 @@ public class GraphCoverage extends HttpServlet
         doPost(request, response);
     }
 
-    private String getHeader()
-    {
-        return "<html>\n" + "<head>\n" + "<title>Graph Coverage</title>\n" + "</head>\n"
-                + "<body bgcolor=\"#DDEEDD\">\n"
-                + "<p style=\"text-align:center;font-size:150%;font-weight:bold\">Graph Coverage Web Application</p>\n"
-                +
-                // add js lib for graph display
-                "<script src=\"jquery-min.js\"></script>\n" + "<script src=\"springy.js\"></script>\n"
-                + "<script src=\"springyui.js\"></script>\n"
-                // js code for retrieving the url
-                // and prompt to users to copy
-                + "<script>" + "function copyToClipboard(text) {"
-                // +"url = window.location.href;"
-                // +"text = url + text;"
-                + "window.prompt(\"Copy to clipboard: Ctrl+C\", text);" + "}" + "</script>";
-    }
-    
+    /***
+     * Creates a collection of WebItems which represents the values the user has entered
+     * into the controls on the webpage.  
+     * @param request
+     * @return
+     */
     public Collection<WebItem> RetrieveWebPageValues(HttpServletRequest request)
     {
+        //This method was created because when reading a webpage of type "multipart/formdata"
+        //the request can only be read once.  Therefore I created a container that will store 
+        //the values so it can be read multiple times.
+        
         String contentType = request.getContentType();
         
         Collection<WebItem> webItems = new ArrayList<>();
-        
+        //Checking to make sure the contentType is "multipart/form-data"
         if(contentType != null && contentType.indexOf("multipart/form-data") != -1)
         {
+            // Following code was pulled from the example https://commons.apache.org/proper/commons-fileupload/using.html 
             // Create a factory for disk-based file items
             DiskFileItemFactory factory = new DiskFileItemFactory();
 
@@ -145,19 +131,25 @@ public class GraphCoverage extends HttpServlet
             try
             {
                 List<FileItem> items = upload.parseRequest(request);
-             // Process the uploaded items
-                Iterator<FileItem> iter = items.iterator();
-                while (iter.hasNext()) {
-                    FileItem item = iter.next();
-
+                // Process the uploaded items
+                Iterator<FileItem> iterator = items.iterator();
+                while (iterator.hasNext()) 
+                {
+                    FileItem item = iterator.next();
+                    // check to see if this item on the request is a control
                     if (item.isFormField()) 
                     {
+                        //store the item in our collection
                         String name  = item.getFieldName();
                         String value = item.getString();                        
                         webItems.add(new WebItem(name, value));
                     }
                     else 
                     {
+                        // This does make an assumption that there is only one form
+                        // in the webpage that is of file type.  If any other items 
+                        // or actions require a file to be read, this method will need
+                        // to be updated
                          ExecuteImportJavaFile(item, request);
                     }
                 }
@@ -172,23 +164,22 @@ public class GraphCoverage extends HttpServlet
         return webItems;
     }
     
-    private static String GetGraphInputValue(GraphInput input, Collection<WebItem> webItems)
-    {
-        return WebCoverageUtility.GetWebValueItemOrNull(input.getControlName(), webItems);
-    }
-    
+    /***
+     * Called by the server (via the service method) to allow a servlet to handle a POST request.
+     */
     public void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException
     {
-        String result = this.getHeader();
+        
+        String webPage = GraphCoverageUtility.getHeader();
         
         Collection<WebItem> webItems = RetrieveWebPageValues(request);
-        
-        String action           = GetGraphInputValue(GraphInput.ActionButton,           webItems);
-        String initialNodeStr   = GetGraphInputValue(GraphInput.InitialNodeTextBox,     webItems);
-        String edgesStr         = GetGraphInputValue(GraphInput.EdgesTextBox,           webItems);
-        String endNodeStr       = GetGraphInputValue(GraphInput.EndNodeTextBox,         webItems);
-        String createGraph      = GetGraphInputValue(GraphInput.CreateGraphButton,      webItems);
-        String selectedMethod   = GetGraphInputValue(GraphInput.SelectedMethodDropDown, webItems);          
+        //Retrieve some of the button values as well as the dropdowns
+        String action           = WebCoverageUtility.GetGraphInputValue(GraphInput.ActionButton,           webItems);
+        String initialNodeStr   = WebCoverageUtility.GetGraphInputValue(GraphInput.InitialNodeTextBox,     webItems);
+        String edgesStr         = WebCoverageUtility.GetGraphInputValue(GraphInput.EdgesTextBox,           webItems);
+        String endNodeStr       = WebCoverageUtility.GetGraphInputValue(GraphInput.EndNodeTextBox,         webItems);
+        String createGraph      = WebCoverageUtility.GetGraphInputValue(GraphInput.CreateGraphButton,      webItems);
+        String selectedMethod   = WebCoverageUtility.GetGraphInputValue(GraphInput.SelectedMethodDropDown, webItems);          
         
         PrintWriter out = response.getWriter();
 
@@ -199,19 +190,20 @@ public class GraphCoverage extends HttpServlet
         											   action,
         											   WebCoverageUtility.GetWebValueItemOrNull(GraphInput.Algorithm2ActionButton.getControlName(), webItems));
         
-        showShareButton = SetShowShareButtonVisibility(action, 
-                                                       WebCoverageUtility.GetWebValueItemOrNull(GraphInput.Algorithm2ActionButton.getControlName(), webItems),
-                                                       webItems);
+        showShareButton = GraphCoverageUtility.setShowShareButtonVisibility(action, 
+                                                                            WebCoverageUtility.GetWebValueItemOrNull(GraphInput.Algorithm2ActionButton.getControlName(), webItems),
+                                                                            webItems);
 
         //////////////////////////////////////////////////////////////
         //////////////////////////////////////////////////////////////
         String algorithm2Action = null;
         if(action == null)
             algorithm2Action = WebCoverageUtility.GetWebValueItemOrNull(GraphInput.Algorithm2ActionButton.getControlName(), webItems);
-
+        
+        // figure out which button was pressed
         if(algorithm2Action != null)
         {
-            result += ExecuteAlgorithm2(algorithm2Action, action, webItems);
+            webPage += executeAlgorithm2(algorithm2Action, action, webItems);
         }
         else
         {
@@ -221,11 +213,13 @@ public class GraphCoverage extends HttpServlet
             {
                 if(createGraph != null)
                 {
-                    result += createGraphFromFile(request, selectedMethod);
+                    // create graph from file was hit therefore create the graphs
+                    webPage += createGraphFromFile(selectedMethod);
                 }
                 else
                 {
-                    result += ClearGraph();
+                    //Otherwise clear graph was called
+                    webPage += clearGraph(selectedMethod);
                 }               
                
             }
@@ -243,47 +237,47 @@ public class GraphCoverage extends HttpServlet
             }
             else if(action.equalsIgnoreCase(TestRequirements.PrimePaths.toString()))
             {
-                result += ExecutePrimePaths(webItems);
+                webPage += executePrimePaths(webItems);
             }
             else if(action.equalsIgnoreCase("Test"))
             {
-                result += ExecuteTest(webItems);
+                webPage += executeTest(webItems);
             }
             else if(action.equalsIgnoreCase(TestRequirements.SimplePaths.toString()))
             {
-                result += ExecuteSimplePaths(webItems);
+                webPage += executeSimplePaths(webItems);
             }
             else if(action.equalsIgnoreCase(TestRequirements.Nodes.toString()))
             {                
-                result += ExecuteNodes(webItems);
+                webPage += executeNodes(webItems);
             }
             else if(action.equalsIgnoreCase(TestRequirements.Edges.toString()))
             {                
-                result += ExecuteEdges(webItems);
+                webPage += executeEdges(webItems);
             }
             else if(action.equalsIgnoreCase(TestRequirements.EdgePair.toString()))
             {              
-                result += ExecuteEdgePair(webItems);
+                webPage += executeEdgePair(webItems);
             }
             else if(action.equalsIgnoreCase(TestPaths.NodeCoverage.toString()))
             {
-            	result += ExecuteNodeCoverageAlgorithm1(webItems);
+            	webPage += executeNodeCoverageAlgorithm1(webItems);
             }
             else if(action.equalsIgnoreCase(TestPaths.EdgeCoverage.toString()))
             {                
-            	result += ExecuteEdgeCoverageAlgorithm1(webItems);
+            	webPage += executeEdgeCoverageAlgorithm1(webItems);
             }
             else if(action.equalsIgnoreCase(TestPaths.EdgePairCoverage.toString()))
             {                
-            	result += ExecuteEdgePairCoverageAlgorithm1(webItems);
+            	webPage += executeEdgePairCoverageAlgorithm1(webItems);
             }
             else if(action.equalsIgnoreCase(TestPaths.PrimePathCoverage.toString()))
             {
-            	result += ExecutePrimePathCoverageAlgorithm1(webItems);
+            	webPage += executePrimePathCoverageAlgorithm1(webItems);
             } // end else if for minimum test path via set cover
             else if(action.equalsIgnoreCase("Prime Path Coverage using Set Cover"))
             {
-                result += ExecutePrimePathCoverageSetCoverAlgorithm1(request);
+                webPage += executePrimePathCoverageSetCoverAlgorithm1(null);
             } // end else if for minimum test path via prefix graph
             else if(action.equalsIgnoreCase("MinimumTestPathViaPrefixGraph"))
             {
@@ -293,8 +287,8 @@ public class GraphCoverage extends HttpServlet
                 Graph bipartite = GraphUtil.getBipartiteGraph(prefix, initialNode, endNode);
                 paths = bipartite.findMinimumPrimePathCoverageViaPrefixGraph(graphToShow.findPrimePaths());
 
-                result += printEdgeForm(edges, initialNode, endNode, methodsList);
-                result += printResult(printRequirements(paths, warning, title));
+                webPage += GraphCoverageUtility.printEdgeForm(new GraphCoverageInput(edges, initialNode, endNode, methodsList, selectedMethod, hiddenLink, showShareButton));
+                webPage += printResult(printRequirements(paths, warning, title));
             } // end else if for test
               // for anything else, send it back to the page
             else
@@ -303,51 +297,22 @@ public class GraphCoverage extends HttpServlet
             }
         }
 
-        result += "<p style=\"font-size:80%;font-family:monospace\">\n" + "Companion software\n"
+        webPage += "<p style=\"font-size:80%;font-family:monospace\">\n" + "Companion software\n"
                 + "<br>to <i>Introduction to Software Testing</i>, Ammann and Offutt.\n"
                 + "<br>Implementation by Wuzhi Xu, Nan Li, Lin Deng, Scott Brown, and Jenifer Cochran.\n"
                 + "<br>&copy; 2007-2017, all rights reserved.\n" + "<br>Last update: 20-July-2017\n</font></p>"
                 + "</body>" + "</html>";
 
-        out.println(result);
+        out.println(webPage);
     }
 
-    private static boolean SetShowShareButtonVisibility(String action, String algorithm2, Collection<WebItem> webItems)
-    {
-        boolean show = algorithm2 != null;// only display share button when there is
-                                          // an action
-        
-        if(action != null)
-        {
-            if(!action.equals("New Graph"))
-                show = true; // only display share button when there
-                             // is an action
-        }            
-        
-        String initialNodeStr = WebCoverageUtility.GetWebValueItemOrNull(GraphInput.InitialNodeTextBox.getControlName(), webItems);
-        String endNodeStr     = WebCoverageUtility.GetWebValueItemOrNull(GraphInput.EndNodeTextBox.getControlName(), webItems);
-        String edgesStr       = WebCoverageUtility.GetWebValueItemOrNull(GraphInput.EdgesTextBox.getControlName(), webItems);
-
-        if(initialNodeStr != null && endNodeStr != null && edgesStr != null)
-        {
-            if(initialNodeStr.equals("") && endNodeStr.equals("") && edgesStr.equals("")) // if
-                                                                                          // provided
-                                                                                          // nothing
-            {
-                show = false;
-            }
-        }
-        
-        return show;       
-    }
-
-    private String createGraphFromFile(HttpServletRequest request, String selectedMethod)
+    private String createGraphFromFile(String selectedMethod)
     {        
         ControlFlowGraphDiagram diagram = graphMap.get(selectedMethod);
         //If the selected item is not in the map, clear the graph
         if(diagram == null)
         {            
-            return ClearGraph();
+            return clearGraph(null);
         }
         
         initialNode = "";
@@ -372,110 +337,41 @@ public class GraphCoverage extends HttpServlet
         }
 
         //edges
-        for(Connection edge : getEdges(diagram.getChildren()))
+        for(Connection edge : ControlFlowUtility.getEdges(diagram.getChildren()))
         {
+            //Format is source, target, label
             edgesString += String.format("%d %d %s\n", edge.getSource().getId(), edge.getTarget().getId(), edge.getLabel());
             
-            Node start       = graphToShow.createNode(edge.getSource().getId());
-            Node destination = graphToShow.createNode(edge.getTarget().getId());
-            String label     = edge.getLabel(); 
-            
+            Node   start       = graphToShow.createNode(edge.getSource().getId());
+            Node   destination = graphToShow.createNode(edge.getTarget().getId());
+            String label       = edge.getLabel(); 
+            //Create an edge with a label
             graphToShow.createEdge(start, destination, label);
         }      
         
         edges = edgesString;
-        
-        
-        
-        
-        return printEdgeForm(edges, initialNode, endNode, methodsList);
+        // show the webpage
+        return GraphCoverageUtility.printEdgeForm(new GraphCoverageInput(edges, initialNode, endNode, methodsList, selectedMethod, hiddenLink, showShareButton));
     }
     
-    protected static List<Connection> getEdges(List<VertexBase> vertices)
-    {
-        List<Connection> connections = new ArrayList<Connection>();
-        Iterator<VertexBase> it = vertices.iterator();
-        VertexBase vb = null;
-        while(it.hasNext())
-        {
-            vb = it.next();         
-            /* build connection list */
-            List<Connection> targetConnection = vb.getTargetConnections();
-            Iterator<Connection> itTargetConnections = targetConnection.iterator();
-            while(itTargetConnections.hasNext())
-            {
-                connections.add(itTargetConnections.next());
-            }
-        }
-        
-        return connections;
-    }
-
     private void ExecuteImportJavaFile(FileItem file, HttpServletRequest request)
     {
         String contentType = request.getContentType();
         if(contentType == null || contentType.indexOf("multipart/form-data") == -1 || file.getSize() <= 0)
         {
             return;
-        }
-            
-        try (InputStream inputStream = file.getInputStream()) 
+        }           
+
+        methodsList.clear();
+        
+        graphMap = ControlFlowUtility.createControlFlowGraphMap(file, request);
+        for(String method : graphMap.keySet())
         {
-            ClassFile classDoc = ClassFile.readClass(inputStream);
-            methodsList.clear();
-            graphMap.clear();
-            for(IMethodSection method : classDoc.getMethodSections())
-            {
-                String methodKey = String.format("Name: %s Descriptor: %s", method.getName(), method.getDescriptor());
-                methodsList.add(methodKey);
-                FilteringCodeVisitor methodInstructions = getInstructionList(file, method.getName(), method.getDescriptor());
-                graphMap.put(methodKey, ControlFlowDiagramGraphFactory.buildBasicblockGraphDiagram(methodInstructions.getInstructions()));
-            }
-        }
-        catch (IOException e)
-        {
-            e.printStackTrace();
-        }
-        catch (ControlFlowGraphException e)
-        {
-            e.printStackTrace();
+            methodsList.add(method);
         }
     }
     
-    /***
-     * Returns the instructions for a given method in a java .class file
-     * 
-     * @param filePath  The ".class" absolute path
-     * @param methodName  the name of the method
-     * @param methodSig the method signature (i.e. a method with a signature like "public static float abs(float a)" the signature would be"(F)F")
-     * @return filtering code visitor
-     * @throws ControlFlowGraphException
-     * @throws IOException
-     */
-    private static FilteringCodeVisitor getInstructionList(FileItem file,
-                                                           String methodName, 
-                                                           String methodSig) throws ControlFlowGraphException, IOException 
-    {
-           try(InputStream fileInputStream = file.getInputStream())
-           {
-               FilteringCodeVisitor   codeVisitor  = new FilteringCodeVisitor(methodName,  methodSig);     
-               MethodFilteringVisitor classVisitor = new MethodFilteringVisitor(codeVisitor);
-               ClassReader            classReader  = new ClassReader(fileInputStream, classVisitor);
-               
-               classReader.accept(classVisitor, 0);
-               
-               if (codeVisitor.getInstructions() == null) 
-               {
-                   throw new ControlFlowGraphException("ControlFlowGraphGenerator: can't get method info of the " + methodName + methodSig);
-
-               }
-
-               return codeVisitor; 
-           }
-                 
-    }
-
-    private String ExecutePrimePathCoverageSetCoverAlgorithm1(HttpServletRequest request)
+    private String executePrimePathCoverageSetCoverAlgorithm1(String selectedMethod)
     {
     	String result = "";
         title = "Prime Path Coverage using Set Cover";
@@ -523,12 +419,18 @@ public class GraphCoverage extends HttpServlet
             e.printStackTrace();
         }
 
-        for(int i = 0; i < splittedPaths.size(); i++)
+        for(int i = 0; i < splittedPaths.size(); i++) 
         {
             paths.add(splittedPaths.get(i));
         }
         paths.remove(0);
-        result += printEdgeForm(edges, initialNode, endNode, methodsList);
+        result += GraphCoverageUtility.printEdgeForm(new GraphCoverageInput(edges,
+                                                       initialNode,
+                                                       endNode, 
+                                                       methodsList, 
+                                                       selectedMethod, 
+                                                       hiddenLink, 
+                                                       showShareButton));
         try
         {
             result += printResult(printPrimePathCoverage(paths, null, title));
@@ -541,7 +443,7 @@ public class GraphCoverage extends HttpServlet
         return result;
     }
 
-    private String ExecutePrimePathCoverageAlgorithm1(Collection<WebItem> webItems) throws IOException
+    private String executePrimePathCoverageAlgorithm1(Collection<WebItem> webItems) throws IOException
     {
     	String result = "";
     	
@@ -558,7 +460,13 @@ public class GraphCoverage extends HttpServlet
             if(!Pattern.matches(GraphUtil.nodePat, endNode.trim()))
                 endNode = "";
 
-            result += printEdgeForm(edges, initialNode, endNode, methodsList);
+            result += GraphCoverageUtility.printEdgeForm(new GraphCoverageInput(edges, 
+                                                           initialNode, 
+                                                           endNode, 
+                                                           methodsList, 
+                                                           WebCoverageUtility.GetGraphInputValue(GraphInput.SelectedMethodDropDown, webItems), 
+                                                           hiddenLink, 
+                                                           showShareButton));
             result += printResult(warning);
         }
         else
@@ -597,13 +505,26 @@ public class GraphCoverage extends HttpServlet
                     {
                         p.size();
                     }
-                    result += printEdgeForm(edges, initialNode, endNode, methodsList);
+                    result += GraphCoverageUtility.printEdgeForm(new GraphCoverageInput(edges,
+                                                                                       initialNode, 
+                                                                                       endNode, 
+                                                                                       methodsList,
+                                                                                       WebCoverageUtility.GetGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
+                                                                                       hiddenLink, 
+                                                                                       showShareButton));
+                                                                                    
                     result += printResult(printPrimePathCoverage(paths, null, title));
                 }
                 catch(InvalidGraphException e)
                 {
                     warning = printWarning(e);
-                    result += printEdgeForm(edges, initialNode, endNode, methodsList);
+                    result += GraphCoverageUtility.printEdgeForm(new GraphCoverageInput(edges,
+                                                                                        initialNode, 
+                                                                                        endNode, 
+                                                                                        methodsList,
+                                                                                        WebCoverageUtility.GetGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
+                                                                                        hiddenLink, 
+                                                                                        showShareButton));
                     result += printResult(warning);
                 } // end catch
             }
@@ -618,13 +539,25 @@ public class GraphCoverage extends HttpServlet
                 {
                     paths = graphToShow.findPrimePathCoverageWithInfeasibleSubPath(infeasiblePrimePaths,
                             infeasibleSubpaths);
-                    result += printEdgeForm(edges, initialNode, endNode, methodsList);
+                    result += GraphCoverageUtility.printEdgeForm(new GraphCoverageInput(edges,
+                                                                                        initialNode, 
+                                                                                        endNode, 
+                                                                                        methodsList,
+                                                                                        WebCoverageUtility.GetGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
+                                                                                        hiddenLink, 
+                                                                                        showShareButton));
                     result += printResult(printPrimePathCoverage(paths, null, title));
                 }
                 catch(InvalidGraphException e)
                 {
-                    warning = printWarning(e);
-                    result += printEdgeForm(edges, initialNode, endNode, methodsList);
+                    warning = printWarning(e);                    
+                    result += GraphCoverageUtility.printEdgeForm(new GraphCoverageInput(edges,
+                                                                                        initialNode, 
+                                                                                        endNode, 
+                                                                                        methodsList,
+                                                                                        WebCoverageUtility.GetGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
+                                                                                        hiddenLink, 
+                                                                                        showShareButton));
                     result += printResult(warning);
                 } // end catch
             }
@@ -633,7 +566,7 @@ public class GraphCoverage extends HttpServlet
         return result;
     }
 
-    private String ExecuteEdgePairCoverageAlgorithm1(Collection<WebItem> webItems) throws IOException
+    private String executeEdgePairCoverageAlgorithm1(Collection<WebItem> webItems) throws IOException
     {
     	String result = "";
         String warning = validate(webItems);
@@ -649,7 +582,13 @@ public class GraphCoverage extends HttpServlet
             if(!Pattern.matches(GraphUtil.nodePat, endNode.trim()))
                 endNode = "";
 
-            result += printEdgeForm(edges, initialNode, endNode, methodsList);
+            result += GraphCoverageUtility.printEdgeForm(new GraphCoverageInput(edges,
+                                                                                initialNode, 
+                                                                                endNode, 
+                                                                                methodsList,
+                                                                                WebCoverageUtility.GetGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
+                                                                                hiddenLink, 
+                                                                                showShareButton));
             result += printResult(warning);
         }
         else
@@ -664,13 +603,25 @@ public class GraphCoverage extends HttpServlet
                     paths.get(i).size();
                 }
                 
-                result += printEdgeForm(edges, initialNode, endNode, methodsList);
+                result += GraphCoverageUtility.printEdgeForm(new GraphCoverageInput(edges,
+                                                                                    initialNode, 
+                                                                                    endNode, 
+                                                                                    methodsList,
+                                                                                    WebCoverageUtility.GetGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
+                                                                                    hiddenLink, 
+                                                                                    showShareButton));
                 result += printResult(printEdgePairCoverage(paths, null, title));
             }
             catch(InvalidGraphException e)
             {
-                warning = printWarning(e);
-                result += printEdgeForm(edges, initialNode, endNode, methodsList);
+                warning = printWarning(e);                    
+                result += GraphCoverageUtility.printEdgeForm(new GraphCoverageInput(edges,
+                                                                                    initialNode, 
+                                                                                    endNode, 
+                                                                                    methodsList,
+                                                                                    WebCoverageUtility.GetGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
+                                                                                    hiddenLink, 
+                                                                                    showShareButton));
                 result += printResult(warning);
             }
         }
@@ -678,7 +629,7 @@ public class GraphCoverage extends HttpServlet
         return result;
     }
 
-    private String ExecuteEdgeCoverageAlgorithm1(Collection<WebItem> webItems) throws IOException
+    private String executeEdgeCoverageAlgorithm1(Collection<WebItem> webItems) throws IOException
     {
     	String result = "";
     	
@@ -695,7 +646,13 @@ public class GraphCoverage extends HttpServlet
             if(!Pattern.matches(GraphUtil.nodePat, endNode.trim()))
                 endNode = "";
 
-            result += printEdgeForm(edges, initialNode, endNode, methodsList);
+            result += GraphCoverageUtility.printEdgeForm(new GraphCoverageInput(edges,
+                                                                                initialNode, 
+                                                                                endNode, 
+                                                                                methodsList,
+                                                                                WebCoverageUtility.GetGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
+                                                                                hiddenLink, 
+                                                                                showShareButton));
             result += printResult(warning);
         }
         else
@@ -703,13 +660,25 @@ public class GraphCoverage extends HttpServlet
             try
             {
                 paths = graphToShow.findEdgeCoverage();
-                result += printEdgeForm(edges, initialNode, endNode, methodsList);
+                result += GraphCoverageUtility.printEdgeForm(new GraphCoverageInput(edges,
+                                                                                    initialNode, 
+                                                                                    endNode, 
+                                                                                    methodsList,
+                                                                                    WebCoverageUtility.GetGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
+                                                                                    hiddenLink, 
+                                                                                    showShareButton));
                 result += printResult(printPaths(paths, null, title));
             }
             catch(InvalidGraphException e)
             {
                 warning = printWarning(e);
-                result += printEdgeForm(edges, initialNode, endNode, methodsList);
+                result += GraphCoverageUtility.printEdgeForm(new GraphCoverageInput(edges,
+                                                                                    initialNode, 
+                                                                                    endNode, 
+                                                                                    methodsList,
+                                                                                    WebCoverageUtility.GetGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
+                                                                                    hiddenLink, 
+                                                                                    showShareButton));
                 result += printResult(warning);
             }
         }
@@ -717,7 +686,7 @@ public class GraphCoverage extends HttpServlet
         return result;
     }
 
-    private String ExecuteNodeCoverageAlgorithm1(Collection<WebItem> webItems) throws IOException
+    private String executeNodeCoverageAlgorithm1(Collection<WebItem> webItems) throws IOException
     {
     	String result = "";
         String warning = validate(webItems);
@@ -733,7 +702,13 @@ public class GraphCoverage extends HttpServlet
             if(!Pattern.matches(GraphUtil.nodePat, endNode.trim()))
                 endNode = "";
 
-            result += printEdgeForm(edges, initialNode, endNode, methodsList);
+            result += GraphCoverageUtility.printEdgeForm(new GraphCoverageInput(edges,
+                                                                                initialNode, 
+                                                                                endNode, 
+                                                                                methodsList,
+                                                                                WebCoverageUtility.GetGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
+                                                                                hiddenLink, 
+                                                                                showShareButton));
             result += printResult(warning);
         }
         else
@@ -741,13 +716,25 @@ public class GraphCoverage extends HttpServlet
             try
             {
                 paths = graphToShow.findNodeCoverage();
-                result += printEdgeForm(edges, initialNode, endNode, methodsList);
+                result += GraphCoverageUtility.printEdgeForm(new GraphCoverageInput(edges,
+                                                                                    initialNode, 
+                                                                                    endNode, 
+                                                                                    methodsList,
+                                                                                    WebCoverageUtility.GetGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
+                                                                                    hiddenLink, 
+                                                                                    showShareButton));
                 result += printResult(printPaths(paths, null, title));
             }
             catch(InvalidGraphException e)
             {
                 warning = printWarning(e);
-                result += printEdgeForm(edges, initialNode, endNode, methodsList);
+                result += GraphCoverageUtility.printEdgeForm(new GraphCoverageInput(edges,
+                                                                                    initialNode, 
+                                                                                    endNode, 
+                                                                                    methodsList,
+                                                                                    WebCoverageUtility.GetGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
+                                                                                    hiddenLink, 
+                                                                                    showShareButton));
                 result += printResult(warning);
             }
         }
@@ -755,7 +742,7 @@ public class GraphCoverage extends HttpServlet
         return result;
     }
 
-    private String ExecuteEdgePair(Collection<WebItem> webItems) throws IOException
+    private String executeEdgePair(Collection<WebItem> webItems) throws IOException
     {
     	String result = "";
     	
@@ -771,7 +758,13 @@ public class GraphCoverage extends HttpServlet
             if(!Pattern.matches(GraphUtil.nodePat, endNode.trim()))
                 endNode = "";
 
-            result += printEdgeForm(edges, initialNode, endNode, methodsList);
+            result += GraphCoverageUtility.printEdgeForm(new GraphCoverageInput(edges,
+                                                                                initialNode, 
+                                                                                endNode, 
+                                                                                methodsList,
+                                                                                WebCoverageUtility.GetGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
+                                                                                hiddenLink, 
+                                                                                showShareButton));
             result += printResult(warning);
 
         }
@@ -779,8 +772,14 @@ public class GraphCoverage extends HttpServlet
         {
             title = TestRequirements.EdgePair.toString();
             paths = graphToShow.findEdgePairs();
-            result += printEdgeForm(edges, initialNode, endNode, methodsList);
-            if(infeasibleEdgePairs == null)
+            result += GraphCoverageUtility.printEdgeForm(new GraphCoverageInput(edges,
+                                                                                initialNode, 
+                                                                                endNode, 
+                                                                                methodsList,
+                                                                                WebCoverageUtility.GetGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
+                                                                                hiddenLink, 
+                                                                                showShareButton));
+            if(infeasibleEdgePairs == null)                
                 infeasibleEdgePairs = "";
             result += printResult(printEdgePairs(paths, warning, title));
         }
@@ -788,7 +787,7 @@ public class GraphCoverage extends HttpServlet
         return result;
     }
 
-    private String ExecuteEdges(Collection<WebItem> webItems) throws IOException
+    private String executeEdges(Collection<WebItem> webItems) throws IOException
     {
     	String result = "";
         String warning = validate(webItems);
@@ -803,7 +802,13 @@ public class GraphCoverage extends HttpServlet
             if(!Pattern.matches(GraphUtil.nodePat, endNode.trim()))
                 endNode = "";
 
-            result += printEdgeForm(edges, initialNode, endNode, methodsList);
+            result += GraphCoverageUtility.printEdgeForm(new GraphCoverageInput(edges,
+                                                                                initialNode, 
+                                                                                endNode, 
+                                                                                methodsList,
+                                                                                WebCoverageUtility.GetGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
+                                                                                hiddenLink, 
+                                                                                showShareButton));
             result += printResult(warning);
 
         }
@@ -811,14 +816,20 @@ public class GraphCoverage extends HttpServlet
         {
             title = TestRequirements.Edges.toString();
             paths = graphToShow.findEdges();
-            result += printEdgeForm(edges, initialNode, endNode, methodsList);
+            result += GraphCoverageUtility.printEdgeForm(new GraphCoverageInput(edges,
+                                                                                initialNode, 
+                                                                                endNode, 
+                                                                                methodsList,
+                                                                                WebCoverageUtility.GetGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
+                                                                                hiddenLink, 
+                                                                                showShareButton));
             result += printResult(printRequirements(paths, warning, title));
         }
         
         return result;
     }
 
-    private String ExecuteNodes(Collection<WebItem> webItems) throws IOException
+    private String executeNodes(Collection<WebItem> webItems) throws IOException
     {
     	String result = "";
     	
@@ -834,7 +845,13 @@ public class GraphCoverage extends HttpServlet
             if(!Pattern.matches(GraphUtil.nodePat, endNode.trim()))
                 endNode = "";
 
-            result += printEdgeForm(edges, initialNode, endNode, methodsList);
+            result += GraphCoverageUtility.printEdgeForm(new GraphCoverageInput(edges,
+                                                                                initialNode, 
+                                                                                endNode, 
+                                                                                methodsList,
+                                                                                WebCoverageUtility.GetGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
+                                                                                hiddenLink, 
+                                                                                showShareButton));
             result += printResult(warning);
 
         }
@@ -842,14 +859,20 @@ public class GraphCoverage extends HttpServlet
         {
             title = TestRequirements.Nodes.toString();
             paths = graphToShow.findNodes();
-            result += printEdgeForm(edges, initialNode, endNode, methodsList);
+            result += GraphCoverageUtility.printEdgeForm(new GraphCoverageInput(edges,
+                                                                                initialNode, 
+                                                                                endNode, 
+                                                                                methodsList,
+                                                                                WebCoverageUtility.GetGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
+                                                                                hiddenLink, 
+                                                                                showShareButton));
             result += printResult(printRequirements(paths, warning, title));
         }
         
         return result;
     }
 
-    private String ExecuteSimplePaths(Collection<WebItem> webItems) throws IOException
+    private String executeSimplePaths(Collection<WebItem> webItems) throws IOException
     {
     	String result = "";
         String warning = validate(webItems);
@@ -864,7 +887,13 @@ public class GraphCoverage extends HttpServlet
             if(!Pattern.matches(GraphUtil.nodePat, endNode.trim()))
                 endNode = "";
 
-            result += printEdgeForm(edges, initialNode, endNode, methodsList);
+            result += GraphCoverageUtility.printEdgeForm(new GraphCoverageInput(edges,
+                                                                                initialNode, 
+                                                                                endNode, 
+                                                                                methodsList,
+                                                                                WebCoverageUtility.GetGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
+                                                                                hiddenLink, 
+                                                                                showShareButton));
             result += printResult(warning);
 
         }
@@ -872,14 +901,20 @@ public class GraphCoverage extends HttpServlet
         {
             title = "Simple Paths";
             paths = graphToShow.findSimplePaths();
-            result += printEdgeForm(edges, initialNode, endNode, methodsList);
+            result += GraphCoverageUtility.printEdgeForm(new GraphCoverageInput(edges,
+                                                                                initialNode, 
+                                                                                endNode, 
+                                                                                methodsList,
+                                                                                WebCoverageUtility.GetGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
+                                                                                hiddenLink, 
+                                                                                showShareButton));
             result += printResult(printRequirements(paths, warning, title));
         }
         
         return result;
     }
 
-    private String ExecuteTest(Collection<WebItem> webItems) throws IOException
+    private String executeTest(Collection<WebItem> webItems) throws IOException
     {
     	String result = "";
         System.out.println("---------------------Test-----------------------------------");
@@ -899,13 +934,19 @@ public class GraphCoverage extends HttpServlet
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
-        result += printEdgeForm(edges, initialNode, endNode, methodsList);
+        result += GraphCoverageUtility.printEdgeForm(new GraphCoverageInput(edges,
+                                                                            initialNode, 
+                                                                            endNode, 
+                                                                            methodsList,
+                                                                            WebCoverageUtility.GetGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
+                                                                            hiddenLink, 
+                                                                            showShareButton));
         result += printResult(printPaths(paths, warning, title));   
         
         return result;
     }
 
-    private String ExecutePrimePaths(Collection<WebItem> webItems) throws IOException
+    private String executePrimePaths(Collection<WebItem> webItems) throws IOException
     {
     	String result = "";
         String warning = validate(webItems);
@@ -920,14 +961,26 @@ public class GraphCoverage extends HttpServlet
             if(!Pattern.matches(GraphUtil.nodePat, endNode.trim()))
                 endNode = "";
 
-            result += printEdgeForm(edges, initialNode, endNode, methodsList);
+            result += GraphCoverageUtility.printEdgeForm(new GraphCoverageInput(edges,
+                                                                                initialNode, 
+                                                                                endNode, 
+                                                                                methodsList,
+                                                                                WebCoverageUtility.GetGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
+                                                                                hiddenLink, 
+                                                                                showShareButton));
             result += printResult(warning);
         }
         else
         {
             title = TestRequirements.PrimePaths.toString();
             paths = graphToShow.findPrimePaths();
-            result += printEdgeForm(edges, initialNode, endNode, methodsList);
+            result += GraphCoverageUtility.printEdgeForm(new GraphCoverageInput(edges,
+                                                                                initialNode, 
+                                                                                endNode, 
+                                                                                methodsList,
+                                                                                WebCoverageUtility.GetGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
+                                                                                hiddenLink, 
+                                                                                showShareButton));
 
             if(infeasiblePrimePaths == null)
                 infeasiblePrimePaths = "";
@@ -938,7 +991,7 @@ public class GraphCoverage extends HttpServlet
         return result;
     }
 
-    private String ClearGraph()
+    private String clearGraph(String selectedMethod)
     {
         graphToShow = new Graph();
         edges = null;
@@ -950,10 +1003,16 @@ public class GraphCoverage extends HttpServlet
         infeasibleEdgePairs = "";
         
         
-        return printEdgeForm("", "", "", methodsList);
+        return GraphCoverageUtility.printEdgeForm(new GraphCoverageInput(edges,
+                                                                         initialNode, 
+                                                                         endNode, 
+                                                                         methodsList,
+                                                                         selectedMethod,
+                                                                         hiddenLink, 
+                                                                         showShareButton));
     }
 
-    private String ExecuteAlgorithm2(String algorithm2Action, String action, Collection<WebItem> webItems) throws IOException
+    private String executeAlgorithm2(String algorithm2Action, String action, Collection<WebItem> webItems) throws IOException
     {
     	String result = "";
         if(action == null && algorithm2Action.equalsIgnoreCase(TestPaths.EdgeCoverage.toString()))
@@ -971,7 +1030,13 @@ public class GraphCoverage extends HttpServlet
                 if(!Pattern.matches(GraphUtil.nodePat, endNode.trim()))
                     endNode = "";
 
-                result += printEdgeForm(edges, initialNode, endNode, methodsList);
+                result += GraphCoverageUtility.printEdgeForm(new GraphCoverageInput(edges,
+                                                                                    initialNode, 
+                                                                                    endNode, 
+                                                                                    methodsList,
+                                                                                    WebCoverageUtility.GetGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
+                                                                                    hiddenLink, 
+                                                                                    showShareButton));
                 result += printResult(warning);
             }
             else
@@ -1031,7 +1096,13 @@ public class GraphCoverage extends HttpServlet
 
                 paths.remove(0);
 
-                result += printEdgeForm(edges, initialNode, endNode, methodsList);
+                result += GraphCoverageUtility.printEdgeForm(new GraphCoverageInput(edges,
+                                                                                    initialNode, 
+                                                                                    endNode, 
+                                                                                    methodsList,
+                                                                                    WebCoverageUtility.GetGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
+                                                                                    hiddenLink, 
+                                                                                    showShareButton));
                 result += printResult(printPaths(paths, null, title));
             }            
         }
@@ -1050,7 +1121,13 @@ public class GraphCoverage extends HttpServlet
                 if(!Pattern.matches(GraphUtil.nodePat, endNode.trim()))
                     endNode = "";
 
-                result += printEdgeForm(edges, initialNode, endNode, methodsList);
+                result += GraphCoverageUtility.printEdgeForm(new GraphCoverageInput(edges,
+                                                                                    initialNode, 
+                                                                                    endNode, 
+                                                                                    methodsList,
+                                                                                    WebCoverageUtility.GetGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
+                                                                                    hiddenLink, 
+                                                                                    showShareButton));
                 result += printResult(warning);
             }
             else
@@ -1116,13 +1193,25 @@ public class GraphCoverage extends HttpServlet
 
                     paths.remove(0);
 
-                    result += printEdgeForm(edges, initialNode, endNode, methodsList);
+                    result += GraphCoverageUtility.printEdgeForm(new GraphCoverageInput(edges,
+                                                                                        initialNode, 
+                                                                                        endNode, 
+                                                                                        methodsList,
+                                                                                        WebCoverageUtility.GetGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
+                                                                                        hiddenLink, 
+                                                                                        showShareButton));
                     result += printResult(printEdgePairCoverage(paths, null, title));
                 }
                 catch(InvalidGraphException e)
                 {
                     warning = printWarning(e);
-                    result += printEdgeForm(edges, initialNode, endNode, methodsList);
+                    result += GraphCoverageUtility.printEdgeForm(new GraphCoverageInput(edges,
+                                                                                        initialNode, 
+                                                                                        endNode, 
+                                                                                        methodsList,
+                                                                                        WebCoverageUtility.GetGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
+                                                                                        hiddenLink, 
+                                                                                        showShareButton));
                     result += printResult(warning);
                 }
             }
@@ -1141,7 +1230,13 @@ public class GraphCoverage extends HttpServlet
                 if(!Pattern.matches(GraphUtil.nodePat, endNode.trim()))
                     endNode = "";
 
-                result += printEdgeForm(edges, initialNode, endNode, methodsList);
+                result += GraphCoverageUtility.printEdgeForm(new GraphCoverageInput(edges,
+                                                                                    initialNode, 
+                                                                                    endNode, 
+                                                                                    methodsList,
+                                                                                    WebCoverageUtility.GetGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
+                                                                                    hiddenLink, 
+                                                                                    showShareButton));
                 result += printResult(warning);
             }
             else
@@ -1209,7 +1304,13 @@ public class GraphCoverage extends HttpServlet
                 }
 
                 paths.remove(0);
-                result += printEdgeForm(edges, initialNode, endNode, methodsList);
+                result += GraphCoverageUtility.printEdgeForm(new GraphCoverageInput(edges,
+                                                                                    initialNode, 
+                                                                                    endNode, 
+                                                                                    methodsList,
+                                                                                    WebCoverageUtility.GetGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
+                                                                                    hiddenLink, 
+                                                                                    showShareButton));
                 try
                 {
                     result += printResult(printPrimePathCoverage(paths, null, title));
@@ -1246,9 +1347,9 @@ public class GraphCoverage extends HttpServlet
      */
     private void createGraph(Collection<WebItem> webItems) throws InvalidInputException
     {
-        initialNode = GetGraphInputValue(GraphInput.InitialNodeTextBox, webItems);
-        edges       = GetGraphInputValue(GraphInput.EdgesTextBox,       webItems);
-        endNode     = GetGraphInputValue(GraphInput.EndNodeTextBox,     webItems);
+        initialNode = WebCoverageUtility.GetGraphInputValue(GraphInput.InitialNodeTextBox, webItems);
+        edges       = WebCoverageUtility.GetGraphInputValue(GraphInput.EdgesTextBox,       webItems);
+        endNode     = WebCoverageUtility.GetGraphInputValue(GraphInput.EndNodeTextBox,     webItems);
 
         graphToShow = GraphUtil.readGraph(edges, initialNode, endNode);
     }
@@ -2102,7 +2203,7 @@ public class GraphCoverage extends HttpServlet
         {
             String label = "";
             
-            coverage.graph.Edge existingEdge = this.findEdge(edge.get(0), edge.get(1), existingEdges);
+            coverage.graph.Edge existingEdge = GraphCoverageUtility.findEdge(edge.get(0), edge.get(1), existingEdges);
             if(existingEdge != null)
             {
                 label = existingEdge.getLabel();                
@@ -2144,159 +2245,5 @@ public class GraphCoverage extends HttpServlet
         result += "</table>\n";
 
         return result;
-    }
-
-    public coverage.graph.Edge findEdge(Node node, Node node2, List<coverage.graph.Edge> existingEdges)
-    {
-        
-        for(coverage.graph.Edge existingEdge : existingEdges)
-        {
-            //if node equals the edge source and node2 is the edge's destination
-            if(node.equals(existingEdge.getSrc()))
-            {
-                if(node2.equals(existingEdge.getDest()))
-                {
-                    return existingEdge;
-                }
-            }  
-          //if node equals the edge destination and node2 is the edge's source
-            else if(node.equals(existingEdge.getDest()))
-            {
-                if(node2.equals(existingEdge.getSrc()))
-                {
-                    return existingEdge;
-                }
-            }
-        }
-        //no match was found
-        return null;                                                 
-    }
-
-    // Effects: return a html page of Graph Coverage Computation Web Application
-    private String printEdgeForm(String edges, String initialNode, String endNode, List<String> methods)
-    {
-                            //Title
-        String form = "" + "<form name = \"graphCoverageForm\" method=\"post\" action=\"GraphCoverage\"  enctype=\"multipart/form-data\" >\n"
-                         + "<div style=\"text-align:center; font-weight:bold; font-size:125%\">Graph Information</div>\n"
-                         // Import java file section
-                         + "<div style=\"text-align:center;\" name = \"javaImportSection\">"
-                                 +"<td align=right width=\"15%\" >Upload Graph from Java file:</td>\n"
-                                 //file input
-                                 + "<input type=\"file\" value=\"Import Graph from Java .class File\" name=\"importJavaFileAction\" enc id=\"file\"/>"
-                                 //Read file button
-                                 + "<input value=\"Read File\" type=\"submit\" name=\"importJavaFile\" id=\"upload\"  />"                                 
-                                 //Method selector section
-                                 +"<p " + SetVisibilityOfMethodDropDown(methods) +"> "
-                                         //Method drop down list
-                                         + "<select name =\""+ GraphInput.SelectedMethodDropDown.getControlName() + "\">"
-                                            +"<option selected disabled>Choose Method Here</option>"
-                                            + CreateMethodOptions(methods)                                             
-                                          + "</select>"
-                                          //Build Graph button
-                                          + "<input value=\"Build Graph\" type=\"submit\" name=\"" 
-                                                        + GraphInput.CreateGraphButton.getControlName() + "\" id=\"upload\"  />"
-                                + "</p>"
-                         + "</div>\n"
-                         + "<table id = \"tableForm\" border=\"1\" width=\"100%\" cellspacing=\"0\" cellpadding=\"0\"  bgcolor=\"#EEFFEE\">\n"
-                         + "<tr>\n" + "  <td width=\"33%\">\n" + "    <table border=\"0\">\n" + "      <tr>\n" + "        <td>\n"
-                         + "          Please enter your <font color=\"green\"><b>graph edges</b></font> in the text box below. \n"
-                         + "        	Put each edge in one line. Enter edges as pairs of nodes, separated by spaces.(e.g.: 1 3)\n"
-                         + "        </td>\n" + "      </tr>\n" + "      <tr align=\"center\">\n"
-                         + "        <td> <textarea rows=\"5\" name=\""+ GraphInput.EdgesTextBox.getControlName() + "\" cols=\"25\">\n" + edges + "</textarea></td>\n"
-                         + "      </tr>\n" + "		</table>\n" + "  </td>\n" + "  <td width=\"33%\" valign=\"top\">\n"
-                         + "	   <table border=\"0\">\n" + "      <tr><td>\n"
-                         + "        Enter <font color=\"green\"><b>initial nodes</b></font> below (can be more than one), separated by spaces. If the text box  \n"
-                         + "        below is empty, the first node in the left box will be the initial node.\n"
-                         + "      </td></tr>\n" + "      <tr align = center>\n" + "        <td>\n"
-                         + "          <p> &nbsp;</p><input type=\"text\" name=\""+ GraphInput.InitialNodeTextBox.getControlName() + "\" size=\"5\" value=\"" + initialNode
-                         + "\">\n" + "        </td>\n" + "      </tr>\n" + "		</table>\n" + "  </td>\n"
-                         + "  <td width=\"34%\" valign=\"top\">\n" + "		<table border=0>\n"
-                         + "      <tr><td>Enter <font color=\"green\"><b>final nodes</b></font> below (can be more than one), \n"
-                         + "        separated by spaces.\n" + "      </td></tr>\n" + "      <tr align = center>\n"
-                         + "        <td>\n"
-                         + "          <p> &nbsp;</p><input type=\"text\" name=\""+ GraphInput.EndNodeTextBox.getControlName() + "\" size=\"30\" value=\"" + endNode
-                         + "\">\n" + "        </td>\n" + "      </tr>\n" + "		</table>\n" + "  </td>\n" + "</tr>\n"
-                         + "</table>\n" + "<table width=\"100%\">\n" + "<tr><td></tr> <tr><td></tr>\n"
-                         + "<tr><td></tr> <tr><td></tr>\n" + "<tr>\n"
-                         + "  <td align=right width=\"15%\" ><b>Test Requirements:</b></td>\n"
-                         + "	 <td width=\"85%\" colspan=\"3\">\n"
-                         + "    <input type=\"submit\" value=\"Nodes\" name=\""+ GraphInput.ActionButton.getControlName() + "\">\n"
-                         + " 	&nbsp;<input type=\"submit\" value=\"Edges\" name=\""+ GraphInput.ActionButton.getControlName() + "\">\n"
-                         + "		&nbsp;<input type=\"submit\" value=\"Edge-Pair\" name=\""+ GraphInput.ActionButton.getControlName() + "\">\n"
-                         + "		&nbsp;<input type=\"submit\" value=\"Simple Paths\" name=\""+ GraphInput.ActionButton.getControlName() + "\">\n"
-                         + "    &nbsp;<input type=\"submit\" value=\"Prime Paths\" name=\""+ GraphInput.ActionButton.getControlName() + "\">\n"
-                         // +" &nbsp;<input type=\"submit\" value=\"Test\"
-                         // name=\"action\">\n"
-                         + "  </td>\n" + "</tr>\n" + "<tr><td></tr> <tr><td></tr>\n" + "<tr>\n"
-                         + "  <td align=right width = \"15%\"><b>Test Paths:</b></td>\n"
-                         + "	 <td width=\"85%\" colspan=\"3\"> Algorithm 1: Slower, more test paths, shorter test paths"
-                         + "									&nbsp; <input type=\"submit\" value=\"Node Coverage\" name=\""+ GraphInput.ActionButton.getControlName() + "\">\n"
-                         + "									&nbsp;<input type=\"submit\" value=\"Edge Coverage\" name=\""+ GraphInput.ActionButton.getControlName() + "\">\n"
-                         + "      							&nbsp;<input type=\"submit\" value=\"Edge-Pair Coverage\" name=\""+ GraphInput.ActionButton.getControlName() + "\">\n "
-                         + " 	   								&nbsp;<input type=\"submit\" value=\"Prime Path Coverage\" name=\""+ GraphInput.ActionButton.getControlName() + "\">\n"
-                         + "   </td>\n" + "</tr>\n" + "<tr>\n" + "  <td align=right width = \"15%\"></td>\n"
-                         + "	 <td width=\"85%\" colspan=\"3\"> Algorithm 2: Faster, fewer test paths, longer test paths"
-                         + "                                    &nbsp; &nbsp; <input type=\"submit\" value=\"Edge Coverage\" name=\""+ GraphInput.Algorithm2ActionButton.getControlName() + "\"> \n"
-                         + "                                    &nbsp; <input type=\"submit\" value=\"Edge-Pair Coverage\" name=\""+ GraphInput.Algorithm2ActionButton.getControlName() + "\"> \n"
-                         + "                                    &nbsp; <input type=\"submit\" value=\"Prime Path Coverage\" name=\""+ GraphInput.Algorithm2ActionButton.getControlName() + "\"> \n"
-                         + "   </td>\n" + "</tr>\n" + "<tr>\n" + "  <td align=right width = \"15%\"></td>\n"
-                         + "	 <td width=\"85%\" colspan=\"3\"> Algorithm 1 is our original, not particularly clever, algorithm to find test paths from graph coverage test requirements. In our 2012 ICST\n"
-                         + "    paper, \"<em>Better Algorithms to Minimize the Cost of Test Paths</em>,\" we described an algorithm that combines test requirements to produce fewer, \n"
-                         + "    but longer test paths (algorithm 2). Users can evaluate the tradeoffs between more but shorter test paths and fewer but longer  \n"
-                         + "    test paths and choose the appropriate algorithm.\n" + "   </td>\n" + "</tr>\n"
-                         // +"&nbsp;<input type=\"submit\"
-                         // value=\"MinimumTestPathViaPrefixGraph\" name=\"action\">\n"
-                         // +" &nbsp;<input type=\"submit\" value=\"Prime Path Coverage
-                         // using Set Cover\" name=\"action\">\n"
-                         // +" </td></tr>\n"
-                         + "<tr><td></tr> <tr><td></tr>\n" + "<tr>\n"
-                         + "  <td align=right width = \"15%\" ><b>Other Tools:</b></td>\n"
-                         + "  <td aligh=\"center\" width=\"85%\" colspan=\"3\">\n"
-                         + "	  <input type=\"submit\" value=\"New Graph\" name=\""+ GraphInput.ActionButton.getControlName() + "\">\n"
-                         + "		&nbsp;<input type=\"submit\" value=\"Data Flow Coverage\" name=\""+ GraphInput.ActionButton.getControlName() + "\">\n"
-                         + "		&nbsp;<input type=\"submit\" value=\"Logic Coverage\" name=\""+ GraphInput.ActionButton.getControlName() + "\">\n"
-                         + "		&nbsp;<input type=\"submit\" value=\"Minimal-MUMCUT Coverage\" name=\""+ GraphInput.ActionButton.getControlName() + "\">\n" + "  </td>\n"
-                         + "</tr>\n" + "<tr><td></tr> <tr><td></tr>\n";
-        // only display the share button when an action has been submitted
-        // i.e. a graph is displayed
-        // otherwise, hide the button
-        if(showShareButton)
-        {
-            form = form + "<tr>\n";
-        }
-        else
-        {
-            form = form + "<tr style=\"visibility:collapse;\">\n";
-        }
-
-        form = form + "  <td align=right width = \"15%\" ><b>Share Graph:</b></td>\n"
-                + "  <td aligh=\"center\" width=\"85%\" >\n" + "	  &nbsp;<img onclick=\"javascript:copyToClipboard('"
-                + hiddenLink + "')\" src=\"share.png\" style=\"width:70px;height:20px;\"/>" + "  </td>\n" + "</tr>\n"
-                + "</table>\n"
-        // leave this form out and put it in the printPrimePaths()
-        // need to leave it out for enabling infeasible paths
-        // +" </form>\n"
-        ;
-
-        return form;
-    }
-
-    private String SetVisibilityOfMethodDropDown(List<String> methods)
-    {
-        if(methods.isEmpty())
-        {
-            return " style=\"visibility:collapse;\" ";
-        }
-        return " style=\"visibility:visible;\" ";
-    }
-
-    private String CreateMethodOptions(List<String> methods)
-    {
-        StringBuilder options = new StringBuilder();
-        for(String method : methods)
-        {
-            options.append(String.format("<option value=\"%s\">%s</option>", method, method));
-        }
-        return options.toString();
     }
 }
