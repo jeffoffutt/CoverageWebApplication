@@ -1,0 +1,9 @@
+build/classes/*
+*.prefs
+.settings/org.eclipse.wst.common.component
+*.container
+.settings/org.eclipse.wst.common.project.facet.core.xml
+.settings/org.eclipse.wst.jsdt.ui.superType.name
+.settings/.jsdtscope
+*.class
+.project
