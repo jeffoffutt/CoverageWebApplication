@@ -18,6 +18,7 @@ public class Node {
 
 	private Object obj;
 	private List<Edge> outGoingEdges;
+    private final String label;
 	
 	/**
 	 * the constructor can only be accessed in the package. 
@@ -27,7 +28,30 @@ public class Node {
 	Node(Object obj)
 	{
 		this.obj = obj;
+		this.label = "";
 		outGoingEdges = new ArrayList<Edge>();
+	}
+	
+	/**
+     * the constructor can only be accessed in the package. 
+     * if construct an node, please use Graph.createNode. A node should not exist without a graph
+     * @param id the unique identifier for the node
+     * @param label the label for the node
+     */
+    Node(String id, String label)
+    {
+        this.obj = id;
+        this.label = label;
+        outGoingEdges = new ArrayList<Edge>();
+    }
+	
+    /**
+     * Returns the label of the node (not necessarily unique)
+     * @return the label
+     */
+	public String getLabel()
+	{
+	    return this.label;
 	}
 
 	

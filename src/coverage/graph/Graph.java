@@ -1,13 +1,10 @@
 
 package coverage.graph;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.stream.Collectors;
 
-import coverage.web.InvalidInputException;
 
 /**
  * 
@@ -21,7 +18,7 @@ import coverage.web.InvalidInputException;
  * Modified by Nan Li
  * Modified by Scott Brown
  * Modified by Lin Deng 02/22/2017 Fixed a fault:
- * 
+ * Modified by Jenifer Cochran 8/12/2017
  * http://localhost:8080/CoverageWebApplication/coverage/GraphCoverage?edges=1+2%0D%0A2+3%0D%0A2+4%0D%0A4+3%0D%0A3+5%0D%0A3+6%0D%0A5+3%0D%0A6+1%0D%0A1+7%0D%0A&initialNode=1&endNode=7&action=Node Coverage
  * 
  * 
@@ -158,7 +155,8 @@ public class Graph extends GraphBase{
 	 * @return
 	 * @throws InvalidGraphException if the graph is invalid, or there is a dead loop 
 	 */
-	public List<Path> findTestPath()
+	@SuppressWarnings("deprecation")
+    public List<Path> findTestPath()
 	throws InvalidGraphException
 	{
 		List<Path> paths = findSpanningTree();
@@ -337,12 +335,12 @@ public class Graph extends GraphBase{
 	 * @return
 	 * @throws InvalidGraphException
 	 */
-	public List<Path> findPrimePathCoverage(String infeasiblePrimePathsString)
+	@SuppressWarnings("deprecation")
+    public List<Path> findPrimePathCoverage(String infeasiblePrimePathsString)
 	throws InvalidGraphException
 	{
 		
 		List<Path> primes = findPrimePaths1(infeasiblePrimePathsString);
-		long start = System.nanoTime();
 		List<Path> testPaths = findTestPath();
 		//List<Path> primes = findPrimePathsWithSidetrips(infeasiblePrimePathsString);
 		for(int i = 0;i <primes.size();i++)
@@ -429,12 +427,7 @@ public class Graph extends GraphBase{
 				}
 			}
 		}
-		
-		for(int i = 0;i < primes.size();i++)
-		{
-			Path prime = primes.get(i);
-		//	System.out.println("prime list: " + "i " + prime);
-		}
+	
 		//minimize the coverage set----step2
 		//for a test path, if all prime paths that are toured by it directly are also toured by another test path directly
 		//delete it from the test paths set
@@ -485,8 +478,7 @@ public class Graph extends GraphBase{
 					if(!selectedPrimePathsWithSidetrips.get(x).isSubpath(primes.get(j)))
 						sign = true;
 				}
-			//	System.out.println("test path: " + "j " + primes.get(j));
-			//	System.out.println("sign: " + sign);
+				
 				//remove the test path if it is redundant
 				if(sign == false && !primes.get(i).equals(primes.get(j)))
 				{
@@ -497,33 +489,14 @@ public class Graph extends GraphBase{
 			}
 		}
 		
-		long end = System.nanoTime();
-     	long duration = end - start;
-     	//System.out.println("running time of prime path coverage = " + duration);
-     	
-     	/*
-		for(int i = 0;i < primes.size();i++)
-		{
-			Path prime = primes.get(i);
-			System.out.println("second prime list: " + "i " + prime);
-		}*/
 		return primes;
 	}
 	
 	
-	public List<Path> findPrimePathCoverageWithInfeasibleSubPath(String infeasiblePrimePathsString, List<Path> infeasibleSubpaths) throws InvalidGraphException{
-		List<Path> result = new ArrayList<Path>();
+	@SuppressWarnings("deprecation")
+    public List<Path> findPrimePathCoverageWithInfeasibleSubPath(String infeasiblePrimePathsString, List<Path> infeasibleSubpaths) throws InvalidGraphException{
 		List<Path> testPathsForPrimePaths = findPrimePathCoverage(infeasiblePrimePathsString);
-		List<Path> tempTestPathsForPrimePaths = new ArrayList<Path>();
 		List<Path> tempPrimes = new ArrayList<Path>();
-		
-		/*List<Path> subPaths = new ArrayList<Path>();
-		Path path1 = new Path(new Node("2"));
-		path1.extendPath(new Node("3"));
-		path1.extendPath(new Node("1"));
-		path1.extendPath(new Node("2"));
-		path1.extendPath(new Node("3"));
-		subPaths.add(path1);*/
 		
 		List<Path> subPaths = new ArrayList<Path>();
 		if(infeasibleSubpaths != null){
@@ -531,43 +504,17 @@ public class Graph extends GraphBase{
 				subPaths.add(infeasibleSubpaths.get(a));
 			}
 		}
-	/*	Path path1 = new Path(new Node("3"));
-		path1.extendPath(new Node("4"));
-		path1.extendPath(new Node("6"));
-		path1.extendPath(new Node("2"));
-		path1.extendPath(new Node("3"));
-		path1.extendPath(new Node("4"));
-		path1.extendPath(new Node("6"));
-		path1.extendPath(new Node("2"));
-	//	path1.extendPath(new Node("1"));
-		Path path2 = new Path(new Node("3"));
-		path2.extendPath(new Node("5"));
-		path2.extendPath(new Node("6"));
-		path2.extendPath(new Node("2"));
-		path2.extendPath(new Node("3"));
-		path2.extendPath(new Node("4"));
-		path2.extendPath(new Node("6"));
-	//	path2.extendPath(new Node("7"));
-	//	path2.extendPath(new Node("1"));
-		subPaths.add(path1);
-		subPaths.add(path2);*/
-		
-	/*	Path path2 = new Path(new Node("2"));
-		path2.extendPath(new Node("3"));
-		path2.extendPath(new Node("1"));
-		path2.extendPath(new Node("2"));
-		path2.extendPath(new Node("3"));
-		System.out.println("path1: " + path1);
-		System.out.println("path2: " + path2);
-	   System.out.println("path1 is equal to path2: " + path1.equals(path2));*/
-		
-		for(int i = 0; i < testPathsForPrimePaths.size();i++){
+
+		for(int i = 0; i < testPathsForPrimePaths.size();i++)
+		{
 			Path testPath = testPathsForPrimePaths.get(i);
-			//System.out.println("test path: " + testPath);
-			for(int j = 0; j < subPaths.size();j++){
+			
+			for(int j = 0; j < subPaths.size();j++)
+			{
 				Path infeasibleSubPath = subPaths.get(j);
-			//	System.out.println("infeasibleSubPath: " + infeasibleSubPath);
-				if(infeasibleSubPath.isSubpath(testPath)){
+				
+				if(infeasibleSubPath.isSubpath(testPath))
+				{
 					testPathsForPrimePaths.remove(i);
 					i--;
 					//break;
@@ -575,20 +522,23 @@ public class Graph extends GraphBase{
 					//check the prime paths that are covered by the deleted test path can be covered by other test paths
 					//if not, try to generate another test path to cover it; else, give up
 					//tempPrimes stores prime paths that are toured by testPath
-		//for(int i = 0; i < testPathsForPrimePaths.size();i++){	
-		//	Path testPath = testPathsForPrimePaths.get(i);
+
 				List<Path> primes = findPrimePaths1(infeasiblePrimePathsString);
-					for(int k = 0; k < primes.size();k++){
+					for(int k = 0; k < primes.size();k++)
+					{
 						boolean exist = false; //a sign for distinguishing existed prime paths
 						boolean exist1 = false; //a sign for whether a prime path is a subpath of an infeasible sub path
 						//set exist to true if there exists the same path in tempPrimes as the one in primes
 						//get rid of redundant prime paths stored in tempPrimes
-						for(int k1 = 0; k1 < tempPrimes.size();k1++){
+						for(int k1 = 0; k1 < tempPrimes.size();k1++)
+						{
 							if(tempPrimes.get(k1).equals(primes.get(k)))
 								exist = true;
 						}
-						for(int k2 = 0; k2 < subPaths.size(); k2++){
-							if(primes.get(k).isSubpath(subPaths.get(k2))){
+						for(int k2 = 0; k2 < subPaths.size(); k2++)
+						{
+							if(primes.get(k).isSubpath(subPaths.get(k2)))
+							{
 								exist1 = true;
 								break;
 							}
@@ -599,13 +549,13 @@ public class Graph extends GraphBase{
 					
 					//check if paths in tempPrimes can be toured by other test paths
 					//if yes, remove it from tempPrimes
-				//	System.out.println("test path: " + testPath);
-					for(int l = 0; l < tempPrimes.size();l++){
+					for(int l = 0; l < tempPrimes.size();l++)
+					{
 						Path tempPrimes1 = tempPrimes.get(l);
-					//	System.out.println("temp prime: " + tempPrimes1);
-						for(int m = 0; m < testPathsForPrimePaths.size();m++){
-					//		System.out.println("test paths1: " + testPathsForPrimePaths.get(m));
-							if(tempPrimes1.isSubpath(testPathsForPrimePaths.get(m)) && !testPathsForPrimePaths.get(m).equals(testPath)){
+						for(int m = 0; m < testPathsForPrimePaths.size();m++)
+						{
+							if(tempPrimes1.isSubpath(testPathsForPrimePaths.get(m)) && !testPathsForPrimePaths.get(m).equals(testPath))
+							{
 								tempPrimes.remove(l);
 								l--;
 								break;
@@ -639,7 +589,7 @@ public class Graph extends GraphBase{
 								for(int y = 0; y < testPathsForPrimePaths.size(); y++){
 									//System.out.println("y:" + y);
 									Path pathForTail = testPathsForPrimePaths.get(y);
-									Path subPathForTail =  null, finalPath = null, finalPath1 = null;
+									Path subPathForTail =  null, finalPath = null;
 									//System.out.println("PathForTail: " + pathForTail.toString());
 									if(subPathForHead != null){
 										//System.out.println("subPathForHead: " + subPathForHead.toString());
@@ -719,7 +669,8 @@ public class Graph extends GraphBase{
 	 * Effects: get a minimal set of test paths for Edge-Pair Coverage that do not cover infeasible edge-pairs
 	 * 
 	 */
-	public List<Path> findEdgePairCoverage(String infeasibleEdgePairs) throws InvalidGraphException{
+	@SuppressWarnings("deprecation")
+    public List<Path> findEdgePairCoverage(String infeasibleEdgePairs) throws InvalidGraphException{
 		//get test paths
 		List<Path> testPaths = findTestPath();
 		//get edge pairs
@@ -941,11 +892,8 @@ public class Graph extends GraphBase{
 			{			
 				for(int z = 0;z < edgeCopy.size();z++)
 				{
-					//if an edge in edgeCopy is being reached by one path, remove it from edgeCopy
-					boolean sign;
 					if(edgeCopy.get(z).equals(path.getEdgeList().get(j)))
 					{
-						sign = edgeCopy.remove(edgeCopy.get(z));
 					
 					}
 				}
@@ -1230,7 +1178,6 @@ public class Graph extends GraphBase{
 	 * Effects: return edge-pair requirements of a graph
 	 */
 	public List<Path> findEdgePairs(){
-		long start = System.nanoTime();
 		List<Path> edgesPath = new ArrayList<Path>();
 		//for each edge, if its destination node has an outgoing edge
 		//add this outgoing edge to it
@@ -1264,7 +1211,8 @@ public class Graph extends GraphBase{
 	/**
 	 * Effects: return a path list of prime paths
 	 */
-	public List<Path> findPrimePaths()
+	@SuppressWarnings("deprecation")
+    public List<Path> findPrimePaths()
 	{
 		//long start = System.nanoTime();
 		//get all simple paths
@@ -1303,7 +1251,8 @@ public class Graph extends GraphBase{
 	 * @return
 	 * @throws InvalidGraphException 
 	 */
-	public List<Path> findPrimePaths1(String infeasiblePrimePaths) throws InvalidGraphException
+	@SuppressWarnings("deprecation")
+    public List<Path> findPrimePaths1(String infeasiblePrimePaths) throws InvalidGraphException
 	{
 		List<Path> simplePaths=findSimplePaths();
 //		System.out.println(simplePaths);
@@ -1396,7 +1345,8 @@ public class Graph extends GraphBase{
 	/**
 	 * Effects: return a path list of prime paths with sidetrips but no marked infeasible prime paths
 	 */
-	public List<Path> findPrimePathsWithSidetrips(String infeasiblePrimePaths)
+	@SuppressWarnings("deprecation")
+    public List<Path> findPrimePathsWithSidetrips(String infeasiblePrimePaths)
 	{
 		List<Path> simplePaths = findSimplePaths();
 		
@@ -1626,8 +1576,6 @@ public class Graph extends GraphBase{
 		
 		//initialize the a list of paths for the set of overlapping paths
 		List<Path> finalSet = new ArrayList<Path>();
-		long start1 = System.nanoTime();
-
 		//find the set that consists of the path covering any two paths that have overlaps.
 		for(Path pathI: primePathsList){
 			for(Path pathJ: primePathsList)
@@ -1670,12 +1618,6 @@ public class Graph extends GraphBase{
 				}//end of if statement
 			}//end of for loop
 		}//end of for loop
-		long end1 = System.nanoTime();
-  	   long duration1 = end1 - start1;
-		//System.out.println("Time for constructing set covers: " + duration1);
-		
-		
-		long start2 = System.nanoTime();
 		//add prime paths to the final set
 		for(Path path: primePathsList){
 			finalSet.add(path);
@@ -1686,8 +1628,6 @@ public class Graph extends GraphBase{
 			finalSet.add(path);
 			//System.out.println("super-test requirement for two prime paths " + "#" + overlappingPaths.indexOf(path) + ": "+ path.toString());
 		}
-		int numberOfSetsSelected = 0;
-		int numberOfSets = finalSet.size();
 		//initialize the number of prime paths that are the subpaths of one path in the final set
 		List<Integer> numberOfSubs = new ArrayList<Integer>();
 		for(int i = 0 ; i < finalSet.size();i++)
@@ -1730,15 +1670,11 @@ public class Graph extends GraphBase{
 		//	System.out.println("extended path: " + finalSet.get(index) + " ;size: " + finalSet.get(index).size());
 			//tempPath = minimumPath.immutableExtendedPath(finalSet.get(index));
 			minimumPath.extendPath(finalSet.get(index));
-			//System.out.println("Selected super-test requirement: " + finalSet.get(index));
-			numberOfSetsSelected++;
-		//	System.out.println("minimumPath: " + minimumPath);
+			//	System.out.println("minimumPath: " + minimumPath);
 			finalSet.remove(index);
 			numberOfSubs.remove(index);
 			
 		}//end while loop
-		long end2 = System.nanoTime();
-  	    long duration2 = end2 - start2;
 		//System.out.println("Time for greedy algorithm: " + duration2);
 		//System.out.println("final minimumPath: " + minimumPath);
 		//System.out.println("size: " + minimumPath.size());
@@ -1951,12 +1887,10 @@ public class Graph extends GraphBase{
 						Node nSrc = nodes.get(m);
 						Node nDest = nodes.get(m + 1);
 						Edge e = new Edge(nSrc, nDest);
-						boolean signForEdge = false;
 						for(int l = 0; l < edges.size(); l++){
 							if(e.equals(edges.get(l))){
 								tempValue = tempValue + ((Path)edges.get(l).getWeight()).size();
 								path.extendPath((Path)edges.get(l).getWeight());
-								signForEdge = true;
 							}							
 						}//end for loop
 						if(m == nodes.size() - 2){
@@ -2025,11 +1959,8 @@ public class Graph extends GraphBase{
 			if(signForRight)
 				rightSide.add(edge.getDest());
 		}
-		long start1 = System.nanoTime();
 		//a list of edges to store the perfect matching
 		List<Edge> perfectMatching = new ArrayList<Edge>();
-		int counterOne = 0;
-		int counterTwo = 0;
 		//an iterator of edges for each vertex on the left side
 		Iterator<Edge> edgesLeft = null;
 		for(int i = 0; i < leftSide.size(); i++){
@@ -2084,8 +2015,6 @@ public class Graph extends GraphBase{
 							Node nodeDest = edge1.getDest();
 							Node nodeSrc = null;
 							int position = 0;
-							//System.out.println("one edge1: " + edge1);
-							counterOne++;
 							//find the edge that has conflict with the current edge in the perfect matching
 							for(int x = 0; x < perfectMatching.size(); x++){
 								if(perfectMatching.get(x).getDest().equals(nodeDest)){
@@ -2100,8 +2029,6 @@ public class Graph extends GraphBase{
 								Iterator<Edge> edges = nodeSrc.getOutGoingIterator();
 								while(edges.hasNext()){
 									Edge edge2 = edges.next();
-									//System.out.println("one edge2: " + edge2);
-									counterTwo++;
 									boolean sign1 = false;
 									//see whether the edge has any conflict with the current perfect matching
 									for(int y = 0; y < perfectMatching.size(); y++){
@@ -2128,16 +2055,7 @@ public class Graph extends GraphBase{
 			}//end while loop
 			
 		}//end of for loop of variable i
-	/*	for(int i = 0;i < leftSide.size();i++)
-			System.out.println(leftSide.get(i));
-		System.out.println("...........");
-		for(int i = 0;i < rightSide.size();i++)
-			System.out.println(rightSide.get(i));
-		System.out.println("...........");
-		for(Edge edge: perfectMatching)
-			System.out.println(edge);*/
-		int sizeOfPerfectMatching = perfectMatching.size();
-		List<Path> paths =new ArrayList<Path>();
+	List<Path> paths =new ArrayList<Path>();
 		// for the perfect matching, find the all cycle covers and store all paths to the finalPathsSet	
 		Path path = new Path();
 		boolean signForMatching = false;
@@ -2229,19 +2147,11 @@ public class Graph extends GraphBase{
 			finalPathsSet.add(path);
 		//	System.out.println("minimumpath: " + minimumPath);
 		}//end for loop
-	//	System.out.println("middle minimumPath: " + minimumPath + "; size: " + minimumPath.size());
-		long end1 = System.nanoTime();
-		long duration1 = end1 - start1;
-		//System.out.println("Time for constructing cycle covers: " + duration1);
-		
-		long start2 = System.nanoTime();
-		//add prime paths to the final paths set
+	//add prime paths to the final paths set
 		minimumPath = new Path();
 		for(Path tempPath: primePaths){
 			finalPathsSet.add(tempPath);
 		}
-		int numberOfFinalSets = finalPathsSet.size();
-		int numberOfSetsSelected = 0;
 		//run the greedy algorithm
 		//initialize the number of prime paths that are the subpaths of one path in the final set
 		List<Integer> numberOfSubs = new ArrayList<Integer>();
@@ -2290,20 +2200,11 @@ public class Graph extends GraphBase{
 		//	System.out.println("extended path: " + finalPathsSet.get(index) + " ;size: " + finalPathsSet.get(index).size());
 			//tempPath = minimumPath.immutableExtendedPath(finalSet.get(index));
 			minimumPath.extendPath(finalPathsSet.get(index));
-			numberOfSetsSelected++;
-		//	System.out.println("minimumPath: " + minimumPath);
+			//	System.out.println("minimumPath: " + minimumPath);
 			finalPathsSet.remove(index);
 			numberOfSubs.remove(index);
 			
 		}//end while loop
-		
-		long end2 = System.nanoTime();
-		long duration2 = end2 - start2;
-		//System.out.println("Time for greedy algorithm: " + duration2);	
-	/*	for(Path path1: primePaths){
-			if(minimumPath.indexOf(path1) == -1)
-				minimumPath.extendPath(path1);
-		}*/
 		
 		//System.out.println("final minimumpath: " + minimumPath);
 		//System.out.println("length: " + minimumPath.size());
@@ -2320,14 +2221,7 @@ public class Graph extends GraphBase{
 	}
 	
 	public List<Path> splittedPathsFromSuperString(Path superString, List<Path> testPaths) throws InvalidGraphException{
-	//	System.out.println("super string: " + superString.toString());
-	/*	System.out.println("-----test paths------");
-		for(Path path: testPaths){
-			System.out.println(path.toString());
-		}
-		System.out.println("-----test paths------");*/
-		long start = System.nanoTime();
-		/*
+	/*
 		 * Breaking a long superstring into shorter test paths starts here:
 		 * 
 		 */
@@ -2528,10 +2422,6 @@ public class Graph extends GraphBase{
 			}
 		}
 		
-		long end = System.nanoTime();
-     	long duration = end - start;
-     	//System.out.println("running time of splitting super string = " + duration);
-     	
 		return paths;
 	}
 	/**
@@ -2541,7 +2431,8 @@ public class Graph extends GraphBase{
 	 * @return a list of all augmenting paths
 	 * @throws InvalidGraphException 
 	 */
-	public List<Path> fordFulkerson(Node starting, Node target) throws InvalidGraphException{
+	@SuppressWarnings("deprecation")
+    public List<Path> fordFulkerson(Node starting, Node target) throws InvalidGraphException{
 		List<Path> augmentingPaths = new ArrayList<Path>();
 		//a residual graph
 		Graph residualGraph = new Graph();
@@ -2863,10 +2754,15 @@ public class Graph extends GraphBase{
 	{
 		return new DFGraph(nodes, edges, starts, ends);
 	}
+	
     public List<Edge> getEdges()
     {
-        // TODO Auto-generated method stub
-        return null;
+        return new ArrayList<Edge>(this.edges);
+    }
+    
+    public List<Node> getNodes()
+    {
+        return new ArrayList<Node>(this.nodes);
     }
 	
 

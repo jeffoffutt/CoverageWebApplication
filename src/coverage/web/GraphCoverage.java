@@ -35,6 +35,7 @@ import coverage.graph.Path;
 import coverage.graph.utility.GraphCoverageUtility;
 import coverage.graph.utility.HiddenLinkUtility;
 import coverage.web.controlflow.ControlFlowUtility;
+import coverage.web.controlflow.diagram.ControlFlowDiagramGraphFactory;
 import coverage.web.enums.GraphInput;
 import coverage.web.enums.OtherTools;
 import coverage.web.enums.TestPaths;
@@ -150,7 +151,7 @@ public class GraphCoverage extends HttpServlet
                         // in the webpage that is of file type.  If any other items 
                         // or actions require a file to be read, this method will need
                         // to be updated
-                         ExecuteImportJavaFile(item, request);
+                         executeImportJavaFile(item, request);
                     }
                 }
             }
@@ -174,12 +175,28 @@ public class GraphCoverage extends HttpServlet
         
         Collection<WebItem> webItems = RetrieveWebPageValues(request);
         //Retrieve some of the button values as well as the dropdowns
-        String action           = WebCoverageUtility.GetGraphInputValue(GraphInput.ActionButton,           webItems);
-        String initialNodeStr   = WebCoverageUtility.GetGraphInputValue(GraphInput.InitialNodeTextBox,     webItems);
-        String edgesStr         = WebCoverageUtility.GetGraphInputValue(GraphInput.EdgesTextBox,           webItems);
-        String endNodeStr       = WebCoverageUtility.GetGraphInputValue(GraphInput.EndNodeTextBox,         webItems);
-        String createGraph      = WebCoverageUtility.GetGraphInputValue(GraphInput.CreateGraphButton,      webItems);
-        String selectedMethod   = WebCoverageUtility.GetGraphInputValue(GraphInput.SelectedMethodDropDown, webItems);          
+        String action           = WebCoverageUtility.getGraphInputValue(GraphInput.ActionButton,           webItems);
+        String initialNodeStr   = WebCoverageUtility.getGraphInputValue(GraphInput.InitialNodeTextBox,     webItems);
+        String edgesStr         = WebCoverageUtility.getGraphInputValue(GraphInput.EdgesTextBox,           webItems);
+        String endNodeStr       = WebCoverageUtility.getGraphInputValue(GraphInput.EndNodeTextBox,         webItems);
+        String createGraph      = WebCoverageUtility.getGraphInputValue(GraphInput.CreateGraphButton,      webItems);
+        String selectedMethod   = WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems); 
+        
+        if(initialNodeStr == null)
+        {
+            initialNodeStr = "";
+        }
+        
+        if(endNodeStr == null)
+        {
+            endNodeStr = "";
+        }
+        
+        if(edgesStr == null)
+        {
+            edgesStr = ""; 
+            
+        }
         
         PrintWriter out = response.getWriter();
 
@@ -326,11 +343,11 @@ public class GraphCoverage extends HttpServlet
         for(VertexBase vertex : diagram.getChildren())
         {
             String label = vertex.getLabel();
-            if (label.equals("START")) 
+            if (label.equals(ControlFlowDiagramGraphFactory.VIRTUAL_START_NODE_TEXT)) 
             {
                 initialNode += vertex.getId() + " ";
             } 
-            else if (label.equals("EXIT")) 
+            else if (label.equals(ControlFlowDiagramGraphFactory.VIRTUAL_EXIT_NODE_TEXT)) 
             {
                 endNode += vertex.getId() + " ";
             }           
@@ -342,8 +359,8 @@ public class GraphCoverage extends HttpServlet
             //Format is source, target, label
             edgesString += String.format("%d %d %s\n", edge.getSource().getId(), edge.getTarget().getId(), edge.getLabel());
             
-            Node   start       = graphToShow.createNode(edge.getSource().getId());
-            Node   destination = graphToShow.createNode(edge.getTarget().getId());
+            Node   start       = graphToShow.createNode(String.format("%d", edge.getSource().getId()), edge.getSource().getLabel());
+            Node   destination = graphToShow.createNode(String.format("%d", edge.getTarget().getId()), edge.getTarget().getLabel());
             String label       = edge.getLabel(); 
             //Create an edge with a label
             graphToShow.createEdge(start, destination, label);
@@ -354,7 +371,7 @@ public class GraphCoverage extends HttpServlet
         return GraphCoverageUtility.printEdgeForm(new GraphCoverageInput(edges, initialNode, endNode, methodsList, selectedMethod, hiddenLink, showShareButton));
     }
     
-    private void ExecuteImportJavaFile(FileItem file, HttpServletRequest request)
+    private void executeImportJavaFile(FileItem file, HttpServletRequest request)
     {
         String contentType = request.getContentType();
         if(contentType == null || contentType.indexOf("multipart/form-data") == -1 || file.getSize() <= 0)
@@ -464,7 +481,7 @@ public class GraphCoverage extends HttpServlet
                                                            initialNode, 
                                                            endNode, 
                                                            methodsList, 
-                                                           WebCoverageUtility.GetGraphInputValue(GraphInput.SelectedMethodDropDown, webItems), 
+                                                           WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems), 
                                                            hiddenLink, 
                                                            showShareButton));
             result += printResult(warning);
@@ -509,7 +526,7 @@ public class GraphCoverage extends HttpServlet
                                                                                        initialNode, 
                                                                                        endNode, 
                                                                                        methodsList,
-                                                                                       WebCoverageUtility.GetGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
+                                                                                       WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
                                                                                        hiddenLink, 
                                                                                        showShareButton));
                                                                                     
@@ -522,7 +539,7 @@ public class GraphCoverage extends HttpServlet
                                                                                         initialNode, 
                                                                                         endNode, 
                                                                                         methodsList,
-                                                                                        WebCoverageUtility.GetGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
+                                                                                        WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
                                                                                         hiddenLink, 
                                                                                         showShareButton));
                     result += printResult(warning);
@@ -543,7 +560,7 @@ public class GraphCoverage extends HttpServlet
                                                                                         initialNode, 
                                                                                         endNode, 
                                                                                         methodsList,
-                                                                                        WebCoverageUtility.GetGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
+                                                                                        WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
                                                                                         hiddenLink, 
                                                                                         showShareButton));
                     result += printResult(printPrimePathCoverage(paths, null, title));
@@ -555,7 +572,7 @@ public class GraphCoverage extends HttpServlet
                                                                                         initialNode, 
                                                                                         endNode, 
                                                                                         methodsList,
-                                                                                        WebCoverageUtility.GetGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
+                                                                                        WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
                                                                                         hiddenLink, 
                                                                                         showShareButton));
                     result += printResult(warning);
@@ -586,7 +603,7 @@ public class GraphCoverage extends HttpServlet
                                                                                 initialNode, 
                                                                                 endNode, 
                                                                                 methodsList,
-                                                                                WebCoverageUtility.GetGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
+                                                                                WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
                                                                                 hiddenLink, 
                                                                                 showShareButton));
             result += printResult(warning);
@@ -607,7 +624,7 @@ public class GraphCoverage extends HttpServlet
                                                                                     initialNode, 
                                                                                     endNode, 
                                                                                     methodsList,
-                                                                                    WebCoverageUtility.GetGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
+                                                                                    WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
                                                                                     hiddenLink, 
                                                                                     showShareButton));
                 result += printResult(printEdgePairCoverage(paths, null, title));
@@ -619,7 +636,7 @@ public class GraphCoverage extends HttpServlet
                                                                                     initialNode, 
                                                                                     endNode, 
                                                                                     methodsList,
-                                                                                    WebCoverageUtility.GetGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
+                                                                                    WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
                                                                                     hiddenLink, 
                                                                                     showShareButton));
                 result += printResult(warning);
@@ -650,7 +667,7 @@ public class GraphCoverage extends HttpServlet
                                                                                 initialNode, 
                                                                                 endNode, 
                                                                                 methodsList,
-                                                                                WebCoverageUtility.GetGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
+                                                                                WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
                                                                                 hiddenLink, 
                                                                                 showShareButton));
             result += printResult(warning);
@@ -664,7 +681,7 @@ public class GraphCoverage extends HttpServlet
                                                                                     initialNode, 
                                                                                     endNode, 
                                                                                     methodsList,
-                                                                                    WebCoverageUtility.GetGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
+                                                                                    WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
                                                                                     hiddenLink, 
                                                                                     showShareButton));
                 result += printResult(printPaths(paths, null, title));
@@ -676,7 +693,7 @@ public class GraphCoverage extends HttpServlet
                                                                                     initialNode, 
                                                                                     endNode, 
                                                                                     methodsList,
-                                                                                    WebCoverageUtility.GetGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
+                                                                                    WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
                                                                                     hiddenLink, 
                                                                                     showShareButton));
                 result += printResult(warning);
@@ -706,7 +723,7 @@ public class GraphCoverage extends HttpServlet
                                                                                 initialNode, 
                                                                                 endNode, 
                                                                                 methodsList,
-                                                                                WebCoverageUtility.GetGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
+                                                                                WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
                                                                                 hiddenLink, 
                                                                                 showShareButton));
             result += printResult(warning);
@@ -720,7 +737,7 @@ public class GraphCoverage extends HttpServlet
                                                                                     initialNode, 
                                                                                     endNode, 
                                                                                     methodsList,
-                                                                                    WebCoverageUtility.GetGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
+                                                                                    WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
                                                                                     hiddenLink, 
                                                                                     showShareButton));
                 result += printResult(printPaths(paths, null, title));
@@ -732,7 +749,7 @@ public class GraphCoverage extends HttpServlet
                                                                                     initialNode, 
                                                                                     endNode, 
                                                                                     methodsList,
-                                                                                    WebCoverageUtility.GetGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
+                                                                                    WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
                                                                                     hiddenLink, 
                                                                                     showShareButton));
                 result += printResult(warning);
@@ -762,7 +779,7 @@ public class GraphCoverage extends HttpServlet
                                                                                 initialNode, 
                                                                                 endNode, 
                                                                                 methodsList,
-                                                                                WebCoverageUtility.GetGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
+                                                                                WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
                                                                                 hiddenLink, 
                                                                                 showShareButton));
             result += printResult(warning);
@@ -776,7 +793,7 @@ public class GraphCoverage extends HttpServlet
                                                                                 initialNode, 
                                                                                 endNode, 
                                                                                 methodsList,
-                                                                                WebCoverageUtility.GetGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
+                                                                                WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
                                                                                 hiddenLink, 
                                                                                 showShareButton));
             if(infeasibleEdgePairs == null)                
@@ -806,7 +823,7 @@ public class GraphCoverage extends HttpServlet
                                                                                 initialNode, 
                                                                                 endNode, 
                                                                                 methodsList,
-                                                                                WebCoverageUtility.GetGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
+                                                                                WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
                                                                                 hiddenLink, 
                                                                                 showShareButton));
             result += printResult(warning);
@@ -820,7 +837,7 @@ public class GraphCoverage extends HttpServlet
                                                                                 initialNode, 
                                                                                 endNode, 
                                                                                 methodsList,
-                                                                                WebCoverageUtility.GetGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
+                                                                                WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
                                                                                 hiddenLink, 
                                                                                 showShareButton));
             result += printResult(printRequirements(paths, warning, title));
@@ -849,7 +866,7 @@ public class GraphCoverage extends HttpServlet
                                                                                 initialNode, 
                                                                                 endNode, 
                                                                                 methodsList,
-                                                                                WebCoverageUtility.GetGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
+                                                                                WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
                                                                                 hiddenLink, 
                                                                                 showShareButton));
             result += printResult(warning);
@@ -863,7 +880,7 @@ public class GraphCoverage extends HttpServlet
                                                                                 initialNode, 
                                                                                 endNode, 
                                                                                 methodsList,
-                                                                                WebCoverageUtility.GetGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
+                                                                                WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
                                                                                 hiddenLink, 
                                                                                 showShareButton));
             result += printResult(printRequirements(paths, warning, title));
@@ -891,7 +908,7 @@ public class GraphCoverage extends HttpServlet
                                                                                 initialNode, 
                                                                                 endNode, 
                                                                                 methodsList,
-                                                                                WebCoverageUtility.GetGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
+                                                                                WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
                                                                                 hiddenLink, 
                                                                                 showShareButton));
             result += printResult(warning);
@@ -905,7 +922,7 @@ public class GraphCoverage extends HttpServlet
                                                                                 initialNode, 
                                                                                 endNode, 
                                                                                 methodsList,
-                                                                                WebCoverageUtility.GetGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
+                                                                                WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
                                                                                 hiddenLink, 
                                                                                 showShareButton));
             result += printResult(printRequirements(paths, warning, title));
@@ -938,7 +955,7 @@ public class GraphCoverage extends HttpServlet
                                                                             initialNode, 
                                                                             endNode, 
                                                                             methodsList,
-                                                                            WebCoverageUtility.GetGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
+                                                                            WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
                                                                             hiddenLink, 
                                                                             showShareButton));
         result += printResult(printPaths(paths, warning, title));   
@@ -965,7 +982,7 @@ public class GraphCoverage extends HttpServlet
                                                                                 initialNode, 
                                                                                 endNode, 
                                                                                 methodsList,
-                                                                                WebCoverageUtility.GetGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
+                                                                                WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
                                                                                 hiddenLink, 
                                                                                 showShareButton));
             result += printResult(warning);
@@ -978,7 +995,7 @@ public class GraphCoverage extends HttpServlet
                                                                                 initialNode, 
                                                                                 endNode, 
                                                                                 methodsList,
-                                                                                WebCoverageUtility.GetGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
+                                                                                WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
                                                                                 hiddenLink, 
                                                                                 showShareButton));
 
@@ -1034,7 +1051,7 @@ public class GraphCoverage extends HttpServlet
                                                                                     initialNode, 
                                                                                     endNode, 
                                                                                     methodsList,
-                                                                                    WebCoverageUtility.GetGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
+                                                                                    WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
                                                                                     hiddenLink, 
                                                                                     showShareButton));
                 result += printResult(warning);
@@ -1100,7 +1117,7 @@ public class GraphCoverage extends HttpServlet
                                                                                     initialNode, 
                                                                                     endNode, 
                                                                                     methodsList,
-                                                                                    WebCoverageUtility.GetGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
+                                                                                    WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
                                                                                     hiddenLink, 
                                                                                     showShareButton));
                 result += printResult(printPaths(paths, null, title));
@@ -1125,7 +1142,7 @@ public class GraphCoverage extends HttpServlet
                                                                                     initialNode, 
                                                                                     endNode, 
                                                                                     methodsList,
-                                                                                    WebCoverageUtility.GetGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
+                                                                                    WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
                                                                                     hiddenLink, 
                                                                                     showShareButton));
                 result += printResult(warning);
@@ -1197,7 +1214,7 @@ public class GraphCoverage extends HttpServlet
                                                                                         initialNode, 
                                                                                         endNode, 
                                                                                         methodsList,
-                                                                                        WebCoverageUtility.GetGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
+                                                                                        WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
                                                                                         hiddenLink, 
                                                                                         showShareButton));
                     result += printResult(printEdgePairCoverage(paths, null, title));
@@ -1209,7 +1226,7 @@ public class GraphCoverage extends HttpServlet
                                                                                         initialNode, 
                                                                                         endNode, 
                                                                                         methodsList,
-                                                                                        WebCoverageUtility.GetGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
+                                                                                        WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
                                                                                         hiddenLink, 
                                                                                         showShareButton));
                     result += printResult(warning);
@@ -1234,7 +1251,7 @@ public class GraphCoverage extends HttpServlet
                                                                                     initialNode, 
                                                                                     endNode, 
                                                                                     methodsList,
-                                                                                    WebCoverageUtility.GetGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
+                                                                                    WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
                                                                                     hiddenLink, 
                                                                                     showShareButton));
                 result += printResult(warning);
@@ -1308,7 +1325,7 @@ public class GraphCoverage extends HttpServlet
                                                                                     initialNode, 
                                                                                     endNode, 
                                                                                     methodsList,
-                                                                                    WebCoverageUtility.GetGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
+                                                                                    WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
                                                                                     hiddenLink, 
                                                                                     showShareButton));
                 try
@@ -1347,9 +1364,9 @@ public class GraphCoverage extends HttpServlet
      */
     private void createGraph(Collection<WebItem> webItems) throws InvalidInputException
     {
-        initialNode = WebCoverageUtility.GetGraphInputValue(GraphInput.InitialNodeTextBox, webItems);
-        edges       = WebCoverageUtility.GetGraphInputValue(GraphInput.EdgesTextBox,       webItems);
-        endNode     = WebCoverageUtility.GetGraphInputValue(GraphInput.EndNodeTextBox,     webItems);
+        initialNode = WebCoverageUtility.getGraphInputValue(GraphInput.InitialNodeTextBox, webItems);
+        edges       = WebCoverageUtility.getGraphInputValue(GraphInput.EdgesTextBox,       webItems);
+        endNode     = WebCoverageUtility.getGraphInputValue(GraphInput.EndNodeTextBox,     webItems);
 
         graphToShow = GraphUtil.readGraph(edges, initialNode, endNode);
     }
@@ -2173,7 +2190,7 @@ public class GraphCoverage extends HttpServlet
         List<Path> edgePaths = graphToShow.findEdges();
         // System.out.println(edgePaths);
         // process edges to generate a graph
-        Iterator nodeItr = graphToShow.getNodeIterator();
+        Iterator nodeItr = graphToShow.getNodes().iterator();
         String nodeStr = "";
         String edgeStr = "";
         // produce strings used for JS

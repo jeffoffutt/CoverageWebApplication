@@ -9,6 +9,8 @@ package coverage.graph;
  * Modified by Wuzhi, Date: Dec 12, 2006
  * 
  * Modified by Nan Li, Date: Nov 30, 2010
+ * 
+ * Modified by Jenifer Cochran Date: August 12, 2017
  */
 public class Edge{
    Node src;  // source node
@@ -69,8 +71,8 @@ public class Edge{
    
    /**
     * the constructor
-    * @param s
-    * @param d
+    * @param s source node
+    * @param d destination node
     * @param label The label of the edge
     */
    Edge(Node s, Node d, String label)
@@ -80,6 +82,7 @@ public class Edge{
       this.label = label;
       src.addOutGoing(this); //add edge into outgoing edge list of source node
    }
+   
    /**
     * 
     * @return the source node

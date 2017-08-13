@@ -33,7 +33,7 @@ public class WebCoverageUtility
     }
 
 
-    static String GetGraphInputValue(GraphInput input, Collection<WebItem> webItems)
+    static String getGraphInputValue(GraphInput input, Collection<WebItem> webItems)
     {
         return GetWebValueItemOrNull(input.getControlName(), webItems);
     }

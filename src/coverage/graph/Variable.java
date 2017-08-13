@@ -334,7 +334,6 @@ public class Variable {
 	 * @return Du Pairs for each variable
 	 */
 	public List<Path> findDuPairs(){
-		List<Path> defPath = new ArrayList<Path>();
 		List<Path> DuPairs = new ArrayList<Path>();
 		//a loop for each def
 		for(int i = 0; i < defs.size(); i++){

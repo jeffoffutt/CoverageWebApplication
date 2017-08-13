@@ -7,9 +7,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-
-import edu.uci.ics.jung.graph.Graph;
 import edu.uci.ics.jung.graph.Vertex;
 import edu.uci.ics.jung.graph.impl.DirectedSparseEdge;
 import edu.uci.ics.jung.graph.impl.SparseGraph;
@@ -240,7 +237,7 @@ public class GraphAdapter {
 			return je2i;
 		
 		//recovery
-		Iterator vedges = jgraph.getEdges().iterator();
+		Iterator<?> vedges = jgraph.getEdges().iterator();
 		while(vedges.hasNext())
 		{
 			edu.uci.ics.jung.graph.Edge vedge = (edu.uci.ics.jung.graph.Edge)vedges.next();

@@ -55,9 +55,7 @@ import com.drgarbage.visualgraphic.model.VertexBase;
 
 public class ControlFlowDiagramGraphFactory
 {
-    public static final String   VIRTUAL_BACK_EDGE_TOOLTIP_TEXT = "Virtual back edge";
-    private static final boolean debug                          = false;
-
+    public static final String VIRTUAL_BACK_EDGE_TOOLTIP_TEXT = "Virtual back edge";
     public static final String VIRTUAL_START_NODE_TEXT = "START";
     public static final String VIRTUAL_EXIT_NODE_TEXT  = "EXIT";
 

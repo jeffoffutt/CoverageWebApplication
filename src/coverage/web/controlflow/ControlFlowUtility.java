@@ -59,7 +59,14 @@ public class ControlFlowUtility
            }                 
     }
     
-    
+    /***
+     * Creates a Map where the key is the method name and descriptor (what gets displayed in the method drop down menu)
+     * and the value is the ControlFlowGraphDiagram that the method is associated with
+     * @param file the java .class file
+     * @param request the request to pull the content type
+     * @return Map where the key is the method name and descriptor (what gets displayed in the method drop down menu)
+     * and the value is the ControlFlowGraphDiagram that the method is associated with
+     */
     public static Map<String, ControlFlowGraphDiagram> createControlFlowGraphMap(FileItem file, HttpServletRequest request)
     {
         Map<String, ControlFlowGraphDiagram> graphMap = new HashMap<String, ControlFlowGraphDiagram>();
@@ -88,11 +95,20 @@ public class ControlFlowUtility
         {
             e.printStackTrace();
         }
+        catch(Exception e) //we dont want the web page to crash so in case of any invalid files
+        {
+            e.printStackTrace();
+        }
         
         return graphMap;
     }
 
 
+    /***
+     * Returns a list of connections given the vertices of the control flow graph
+     * @param vertices the vertices in the graph
+     * @return a list of connections in the graph
+     */
     public static List<Connection> getEdges(List<VertexBase> vertices)
     {
         List<Connection> connections = new ArrayList<Connection>();

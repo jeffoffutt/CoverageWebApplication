@@ -27,8 +27,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
-import org.eclipse.jface.preference.IPreferenceStore;
-
 import com.drgarbage.asm.AnnotationVisitor;
 import com.drgarbage.asm.Attribute;
 import com.drgarbage.asm.ClassVisitor;
@@ -94,8 +92,10 @@ import com.drgarbage.javasrc.JavaKeywords;
 import com.drgarbage.javasrc.JavaLexicalConstants;
 import com.drgarbage.javasrc.JavaSourceUtils;
 
-public abstract class AbstractClassFile extends ClassVisitor implements com.drgarbage.asm.Opcodes, IClassFileDocument,
-        IConstantPoolVisitor, BytecodeVisualizerPreferenceConstats
+public abstract class AbstractClassFile extends ClassVisitor implements com.drgarbage.asm.Opcodes, 
+                                                                        IClassFileDocument,
+                                                                        IConstantPoolVisitor, 
+                                                                        BytecodeVisualizerPreferenceConstats
 {
 
     protected abstract class AbstractClassFileElement extends MethodVisitor
@@ -129,8 +129,10 @@ public abstract class AbstractClassFile extends ClassVisitor implements com.drga
 
     }
 
-    protected abstract class AbstractMethodRenderer extends AbstractClassFileElement
-            implements com.drgarbage.asm.Opcodes, ICodeVisitor, ILocalVariableTableVisitor, IMethodSection
+    protected abstract class AbstractMethodRenderer extends AbstractClassFileElement implements com.drgarbage.asm.Opcodes, 
+                                                                                                ICodeVisitor, 
+                                                                                                ILocalVariableTableVisitor, 
+                                                                                                IMethodSection
     {
 
         protected class Block
@@ -1597,6 +1599,7 @@ public abstract class AbstractClassFile extends ClassVisitor implements com.drga
             }
         }
 
+        @SuppressWarnings("deprecation")
         public void visitMethodInsn(final int opcode, final String owner, final String name, final String desc)
         {
             if (mv != null)
@@ -1621,7 +1624,7 @@ public abstract class AbstractClassFile extends ClassVisitor implements com.drga
             }
             return null;
         }
-
+       
         public void visitTableSwitchInsn(final int min, final int max, final Label dflt, final Label[] labels)
         {
             if (mv != null)

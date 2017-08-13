@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.7">
+		<attributes>
+			<attribute name="owner.project.facets" value="java"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="con" path="org.eclipse.jst.j2ee.internal.web.container"/>
+	<classpathentry kind="con" path="org.eclipse.jst.j2ee.internal.module.container"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
+	<classpathentry kind="lib" path="C:/Users/Jenifer/Documents/GitHub/CoverageWebApplication/WebContent/coverage/lib/org.eclipse.draw2d_3.9.0.201212170307.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Jenifer/Documents/GitHub/CoverageWebApplication/WebContent/coverage/lib/org.eclipse.equinox.common-3.6.0.v20100503.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Jenifer/Documents/GitHub/CoverageWebApplication/WebContent/coverage/lib/org.eclipse.jdt.core-3.10.0.v20140604-1726.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Jenifer/Documents/GitHub/CoverageWebApplication/WebContent/coverage/lib/org.eclipse.jface.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Jenifer/Documents/GitHub/CoverageWebApplication/WebContent/coverage/lib/org.eclipse.osgi-3.7.1.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Jenifer/Documents/GitHub/CoverageWebApplication/WebContent/coverage/lib/org.eclipse.swt.win32.win32.x86_64-4.3.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Jenifer/Documents/GitHub/CoverageWebApplication/WebContent/coverage/lib/org.eclipse.ui.views_3.2.1.M20060906-0800.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Jenifer/Documents/GitHub/CoverageWebApplication/WebContent/coverage/lib/com.drgarbage.asm_5.0.3.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Jenifer/Documents/GitHub/CoverageWebApplication/WebContent/coverage/lib/com.drgarbage.asm.util_5.0.3.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Jenifer/Documents/GitHub/CoverageWebApplication/WebContent/coverage/lib/com.drgarbage.controlflowgraphfactory_4.4.1.201408050542.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Jenifer/Documents/GitHub/CoverageWebApplication/WebContent/coverage/lib/com.drgarbage.sourcecodevisualizer_4.4.0.201408050542.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Jenifer/Documents/GitHub/CoverageWebApplication/WebContent/coverage/lib/com.drgarbage.asm_5.0.3.201408050542.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Jenifer/Documents/GitHub/CoverageWebApplication/WebContent/coverage/lib/com.drgarbage.bytecodevisualizer_4.4.1.201408050542.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Jenifer/Documents/GitHub/CoverageWebApplication/WebContent/coverage/lib/com.drgarbage.bytecodevisualizer.plugin_4.4.1.201408050542.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Jenifer/Documents/GitHub/CoverageWebApplication/WebContent/coverage/lib/com.drgarbage.controlflowgraphfactory.plugin_4.4.1.201408050542.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Jenifer/Documents/GitHub/CoverageWebApplication/WebContent/coverage/lib/com.drgarbage.core.plugin_4.4.1.201408050542.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Jenifer/Documents/GitHub/CoverageWebApplication/WebContent/coverage/lib/com.drgarbage.sourcecodevisualizer.plugin_4.4.0.201408050542.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Jenifer/Documents/GitHub/CoverageWebApplication/WebContent/coverage/lib/artifacts.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Jenifer/Documents/GitHub/CoverageWebApplication/WebContent/coverage/lib/content.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Jenifer/Documents/GitHub/CoverageWebApplication/WebContent/coverage/lib/commons-fileupload-1.2.2.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Jenifer/Documents/GitHub/CoverageWebApplication/WebContent/coverage/lib/commons-io-2.3.jar"/>
+	<classpathentry kind="lib" path="WebContent/WEB-INF/lib/javax.servlet-api-3.0.1.jar"/>
+	<classpathentry kind="output" path="build/classes"/>
+</classpath>

@@ -12,9 +12,14 @@ public class HiddenLinkUtility
         
     }
     
+    /***
+     * The base url for the graph coverage location
+     */
     public static final String GRAPH_COVERAGE_LINK = "https://cs.gmu.edu:8443/offutt/coverage/GraphCoverage?";
     
     /**
+     * Creates the link that can share the graph to another
+     * user.  Here are some examples:
      * https://cs.gmu.edu:8443/offutt/coverage/GraphCoverage?
      * edges=1+2%0D%0A2+3%0D%0A1+3%0D%0A3+4%0D%0A3+5%0D%0A&
      * initialNode=1&
@@ -34,12 +39,12 @@ public class HiddenLinkUtility
      * endNode=5+4&
      * algorithm2=Edge-Pair%20Coverage
      * 
-     *no edges
-     *https://cs.gmu.edu:8443/offutt/coverage/GraphCoverage?
-     *edges=&
-     *initialNode=1+2+3&
-     *endNode=5+4&
-     *action=Nodes
+     * no edges
+     * https://cs.gmu.edu:8443/offutt/coverage/GraphCoverage?
+     * edges=&
+     * initialNode=1+2+3&
+     * endNode=5+4&
+     * action=Nodes
      * 
      * empty
      * https://cs.gmu.edu:8443/offutt/coverage/GraphCoverage?
@@ -48,11 +53,12 @@ public class HiddenLinkUtility
      * endNode=&
      * action=Edges
      * 
-     * @param edgesString
-     * @param initialNodeString
-     * @param endNodeString
-     * @param actionString
-     * @param algorithm2String
+     * @param edgesString Edges that are in the patter of letters/numbers + space + letters/number + space + letters/numbers + next line (repeat for each edge)
+     * the first letters/numbers is the source node, the next is the destination node, the last is the label for the edge
+     * @param initialNodeString Nodes that are separated by spaces
+     * @param endNodeString Nodes that are separated by spaces
+     * @param actionString the action string (value/input from the button)
+     * @param algorithm2String the algorithm2 string (value/input from the button)
      * @return
      */
     public static String BuildHiddenLink(String edgesString, 
@@ -80,7 +86,11 @@ public class HiddenLinkUtility
         return hiddenLink;               
     }
     
-    
+    /***
+     * Builds the algorithm/action portion of the string
+     * @param algorithm2String algorithm 2 string
+     * @return the section of the algorithm2 value in the link
+     */
     private static String BuildAlgorithmLinkString(String algorithm2String)
     {
         String algorithm2ActionStr = algorithm2String.trim();
@@ -88,7 +98,11 @@ public class HiddenLinkUtility
         return "algorithm2=" + algorithm2ActionStr;
     }
     
-    
+    /***
+     * Builds the algorithm/action portion of the string
+     * @param actionString action string (button value)
+     * @return the section of the action value in the link
+     */
     private static String BuildActionLinkString(String actionString)
     {
        // process the whitespace in action
@@ -98,7 +112,11 @@ public class HiddenLinkUtility
         return "action=" + actionStr;
     }
     
-    
+    /***
+     * Builds the endNode value of the hidden link
+     * @param endNodeString end nodes
+     * @return the end node values in the link
+     */
     private static String BuildEndNodeLinkString(String endNodeString)
     {
         String endNodeLink = "";
@@ -113,7 +131,11 @@ public class HiddenLinkUtility
         return endNodeLink;
     }
     
-    
+    /***
+     * Builds the initial Node value of the hidden link
+     * @param initialNodeString initial nodes
+     * @return the initial node values in the link
+     */
     private static String BuildInitialNodeLinkString(String initalNodeString)
     {
         String initialNodeLink = "";
@@ -130,7 +152,11 @@ public class HiddenLinkUtility
         return initialNodeLink;
     }
       
-    
+    /***
+     * Edges portion of the string
+     * @param edgesString the edges pulled from the text box value
+     * @return the edges in a link form
+     */
     private static String BuildEdgesLinkString(String edgesString)
     {
         // process edgesStr

@@ -104,6 +104,28 @@ public abstract class GraphBase {
 		return node;
 	}
 	
+	
+	/**
+     * 
+     * @param obj
+     * @return existed node if it existed in graph, otherwise return a new node and add it into graph
+     */
+    public Node createNode(String id, String label)
+    {
+        //check whether the node has existed in the graph
+        for(int i = 0;i < nodes.size();i++) {   
+            //System.out.println(nodes.get(i).getObject().toString() + nodes.get(i).getObject().getClass());
+        //  System.out.println("obj" + obj.toString() + obj.getClass());
+            //System.out.println(nodes.get(i).getObject().equals(obj));
+            if(nodes.get(i).getObject().equals(id))    
+                return nodes.get(i);
+        }
+        //return a new node
+        Node node = new Node(id, label);
+        nodes.add(node);
+        return node;
+    }
+	
 	/**
 	 * 
 	 * @param s

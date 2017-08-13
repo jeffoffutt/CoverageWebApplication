@@ -107,7 +107,8 @@ public class GraphUtil {
 	 * @param s the string outputed by the above method 'outputGraph'
 	 * @return
 	 */
-	public static Graph inputGraph(String s)	
+	@SuppressWarnings("deprecation")
+    public static Graph inputGraph(String s)	
 	{		
 		String[] parts= new String[3];
 		StringTokenizer st=new StringTokenizer(s, ":");		
@@ -361,7 +362,8 @@ public class GraphUtil {
 	 * @param endNodes
 	 * @return a graph with all edges, the initial node, and final nodes
 	 */
-	public static Graph readGraph(String edges, String initialNode, String endNodes) throws InvalidInputException
+	@SuppressWarnings("deprecation")
+    public static Graph readGraph(String edges, String initialNode, String endNodes) throws InvalidInputException
 	{
 		if(edges==null)
 			throw new InvalidInputException("Invalid input. Please read the notes above the forms. ");

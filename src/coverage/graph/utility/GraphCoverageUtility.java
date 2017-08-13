@@ -3,7 +3,6 @@ package coverage.graph.utility;
 import java.util.Collection;
 import java.util.List;
 
-import coverage.graph.Edge;
 import coverage.graph.Node;
 import coverage.web.GraphCoverageInput;
 import coverage.web.WebCoverageUtility;
@@ -12,7 +11,24 @@ import coverage.web.enums.GraphInput;
 
 public class GraphCoverageUtility
 {
+    /**
+     * Private constructor: this is so clients do not
+     * instantiate this class, but rather call it with
+     * a static context
+     */
+    private GraphCoverageUtility()
+    {
+        
+    }
 
+    /***
+     * Returns true if the show button should be visible false otherwise
+     * 
+     * @param action action value from the button
+     * @param algorithm2 the value from the algorithm2 button
+     * @param webItems the list of web buttons and their values
+     * @return
+     */
     public static boolean setShowShareButtonVisibility(String action, String algorithm2, Collection<WebItem> webItems)
     {
         boolean show = algorithm2 != null;// only display share button when there is
@@ -42,6 +58,13 @@ public class GraphCoverageUtility
         return show;       
     }
 
+    /***
+     * Finds an edge that has a source and destination node of the nodes passed into the function.
+     * @param node  node start (or end)
+     * @param node2 node end (or start)
+     * @param existingEdges the edges list to search through
+     * @return
+     */
     public static coverage.graph.Edge findEdge(Node node, Node node2, List<coverage.graph.Edge> existingEdges)
     {
         
@@ -68,9 +91,33 @@ public class GraphCoverageUtility
         return null;                                                 
     }
 
-    // Effects: return a html page of Graph Coverage Computation Web Application
+    /***
+     *  Effects: return a html page of Graph Coverage Computation Web Application
+     *  
+     *  This builds the text input for the initial node, end node, and edges portion of the webpage as well as all of
+     *  the buttons for the coverage types and the file import.
+     * @param input graph coverage input to fill out the user inputs as well as the methods to select
+     * @return the html page of the graph coverage computation web application
+     */
     public static String printEdgeForm(GraphCoverageInput input)
     {
+        String edges = input.getEdges();
+        String initialNode = input.getInitialNode();
+        String endNode    = input.getEndNode();
+        if(edges == null)
+        {
+            edges = "";
+        }
+        
+        if(initialNode == null)
+        {
+            initialNode = "";
+        }
+        
+        if(endNode == null)
+        {
+            endNode = "";
+        }
                             //Title
         String form = "" + "<form name = \"graphCoverageForm\" method=\"post\" action=\"GraphCoverage\"  enctype=\"multipart/form-data\" >\n"
                          + "<div style=\"text-align:center; font-weight:bold; font-size:125%\">Graph Information</div>\n"
@@ -86,7 +133,7 @@ public class GraphCoverageUtility
                                          //Method drop down list
                                          + "<select name =\""+ GraphInput.SelectedMethodDropDown.getControlName() + "\">"
                                             +"<option selected disabled>Choose Method Here</option>"
-                                            + GraphCoverageUtility.createMethodOptions(input.getMethods())                                             
+                                            + GraphCoverageUtility.createMethodOptions(input.getMethods(), input.getSelectedMethod())                                             
                                           + "</select>"
                                           //Build Graph button
                                           + "<input value=\"Build Graph\" type=\"submit\" name=\"" 
@@ -98,19 +145,19 @@ public class GraphCoverageUtility
                          + "          Please enter your <font color=\"green\"><b>graph edges</b></font> in the text box below. \n"
                          + "        	Put each edge in one line. Enter edges as pairs of nodes, separated by spaces.(e.g.: 1 3)\n"
                          + "        </td>\n" + "      </tr>\n" + "      <tr align=\"center\">\n"
-                         + "        <td> <textarea rows=\"5\" name=\""+ GraphInput.EdgesTextBox.getControlName() + "\" cols=\"25\">\n" + input.getEdges() + "</textarea></td>\n"
+                         + "        <td> <textarea rows=\"5\" name=\""+ GraphInput.EdgesTextBox.getControlName() + "\" cols=\"25\">\n" + edges + "</textarea></td>\n"
                          + "      </tr>\n" + "		</table>\n" + "  </td>\n" + "  <td width=\"33%\" valign=\"top\">\n"
                          + "	   <table border=\"0\">\n" + "      <tr><td>\n"
                          + "        Enter <font color=\"green\"><b>initial nodes</b></font> below (can be more than one), separated by spaces. If the text box  \n"
                          + "        below is empty, the first node in the left box will be the initial node.\n"
                          + "      </td></tr>\n" + "      <tr align = center>\n" + "        <td>\n"
-                         + "          <p> &nbsp;</p><input type=\"text\" name=\""+ GraphInput.InitialNodeTextBox.getControlName() + "\" size=\"5\" value=\"" + input.getInitialNode()
+                         + "          <p> &nbsp;</p><input type=\"text\" name=\""+ GraphInput.InitialNodeTextBox.getControlName() + "\" size=\"5\" value=\"" + initialNode
                          + "\">\n" + "        </td>\n" + "      </tr>\n" + "		</table>\n" + "  </td>\n"
                          + "  <td width=\"34%\" valign=\"top\">\n" + "		<table border=0>\n"
                          + "      <tr><td>Enter <font color=\"green\"><b>final nodes</b></font> below (can be more than one), \n"
                          + "        separated by spaces.\n" + "      </td></tr>\n" + "      <tr align = center>\n"
                          + "        <td>\n"
-                         + "          <p> &nbsp;</p><input type=\"text\" name=\""+ GraphInput.EndNodeTextBox.getControlName() + "\" size=\"30\" value=\"" + input.getEndNode()
+                         + "          <p> &nbsp;</p><input type=\"text\" name=\""+ GraphInput.EndNodeTextBox.getControlName() + "\" size=\"30\" value=\"" + endNode
                          + "\">\n" + "        </td>\n" + "      </tr>\n" + "		</table>\n" + "  </td>\n" + "</tr>\n"
                          + "</table>\n" + "<table width=\"100%\">\n" + "<tr><td></tr> <tr><td></tr>\n"
                          + "<tr><td></tr> <tr><td></tr>\n" + "<tr>\n"
@@ -177,7 +224,13 @@ public class GraphCoverageUtility
         return form;
     }
 
-    public static String setVisibilityOfMethodDropDown(List<String> methods)
+    
+    /***
+     * Hides the methods dropdown if there are no methods to choose from
+     * @param methods
+     * @return
+     */
+    private static String setVisibilityOfMethodDropDown(List<String> methods)
     {
         if(methods.isEmpty())
         {
@@ -186,16 +239,31 @@ public class GraphCoverageUtility
         return " style=\"visibility:visible;\" ";
     }
 
-    public static String createMethodOptions(List<String> methods)
+    /***
+     * Creates the method drop down values
+     * @param methods
+     * @param selectedMethod TODO
+     * @return
+     */
+    private static String createMethodOptions(List<String> methods, String selectedMethod)
     {
         StringBuilder options = new StringBuilder();
         for(String method : methods)
         {
-            options.append(String.format("<option value=\"%s\">%s</option>", method, method));
+            String selected  = "";
+            if(method.equals(selectedMethod))
+            {
+                selected = "selected=\"selected\"";
+            }
+            options.append(String.format("<option %s value=\"%s\">%s</option>", selected, method, method));
         }
         return options.toString();
     }
 
+    /***
+     * The header html for the Graph Coverage webpage
+     * @return
+     */
     public static String getHeader()
     {
         return "<html>\n" + "<head>\n" + "<title>Graph Coverage</title>\n" + "</head>\n"
