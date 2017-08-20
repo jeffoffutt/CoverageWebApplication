@@ -1131,7 +1131,7 @@ public class ControlFlowDiagramGraphFactory
         /* get preferences */
         boolean createStartNode = true;
         boolean createExitNode = true;
-        boolean createBackEdge = true;
+        boolean createBackEdge = false;
 
         /* generate control flow graph */
         IDirectedGraphExt graph = generateSourceCodeGraph(instructions, lineNumberTable, createStartNode,
@@ -1358,8 +1358,7 @@ public class ControlFlowDiagramGraphFactory
         boolean createBackEdge = false;
 
         /* generate control flow graph */
-        IDirectedGraphExt basicBlockGraph = generateBasicBlockGraph(instructions, null, createStartNode, createExitNode,
-                createBackEdge);
+        IDirectedGraphExt basicBlockGraph = generateBasicBlockGraph(instructions, null, createStartNode, createExitNode, createBackEdge);
         return createBasicBlockDiagram(basicBlockGraph);
     }
 

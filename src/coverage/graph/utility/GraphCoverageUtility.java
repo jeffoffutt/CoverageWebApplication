@@ -3,10 +3,16 @@ package coverage.graph.utility;
 import java.util.Collection;
 import java.util.List;
 
+import com.drgarbage.bytecode.LineNumberTableEntry;
+import com.drgarbage.visualgraphic.model.ControlFlowGraphDiagram;
+import com.drgarbage.visualgraphic.model.VertexBase;
+
+import coverage.graph.Edge;
 import coverage.graph.Node;
 import coverage.web.GraphCoverageInput;
 import coverage.web.WebCoverageUtility;
 import coverage.web.WebItem;
+import coverage.web.controlflow.diagram.WebControlFlowGraphDiagram;
 import coverage.web.enums.GraphInput;
 
 public class GraphCoverageUtility
@@ -143,7 +149,7 @@ public class GraphCoverageUtility
                          + "<table id = \"tableForm\" border=\"1\" width=\"100%\" cellspacing=\"0\" cellpadding=\"0\"  bgcolor=\"#EEFFEE\">\n"
                          + "<tr>\n" + "  <td width=\"33%\">\n" + "    <table border=\"0\">\n" + "      <tr>\n" + "        <td>\n"
                          + "          Please enter your <font color=\"green\"><b>graph edges</b></font> in the text box below. \n"
-                         + "        	Put each edge in one line. Enter edges as pairs of nodes, separated by spaces.(e.g.: 1 3)\n"
+                         + "        	Put each edge in one line. Enter edges as pairs of nodes, separated by spaces.(e.g.: 1 3) \nOptional to add a label for the edge (e.g. 1 3 true)\n"
                          + "        </td>\n" + "      </tr>\n" + "      <tr align=\"center\">\n"
                          + "        <td> <textarea rows=\"5\" name=\""+ GraphInput.EdgesTextBox.getControlName() + "\" cols=\"25\">\n" + edges + "</textarea></td>\n"
                          + "      </tr>\n" + "		</table>\n" + "  </td>\n" + "  <td width=\"33%\" valign=\"top\">\n"
@@ -280,5 +286,32 @@ public class GraphCoverageUtility
                 // +"text = url + text;"
                 + "window.prompt(\"Copy to clipboard: Ctrl+C\", text);" + "}" + "</script>";
     }
+
+    public static String buildRelationalTable(WebControlFlowGraphDiagram diagram)
+    {
+        String htmlTableHeader = "<td width=\"400\" >\r\n"
+                                 +   "<table style=\"width:100%\" border=\"1\">\r\n" + 
+                                 "    <tr align=\"left\">\r\n" + 
+                                 "      <th>Identifier</th>\r\n" + 
+                                 "      <th>Description</th> \r\n" + 
+                                 "    </tr>";
+        
+        StringBuilder tableContents = new StringBuilder();
+        for(VertexBase node : diagram.getDiagram().getChildren())
+        {
+            tableContents.append(String.format("   <tr>\r\n" + 
+                                               "      <td>%d</td>\r\n" + 
+                                               "      <td><p>%s</p></td>\r\n" + 
+                                               "    </tr>",
+                                               node.getId(),
+                                               node.getLabel().replace("\n", "<br />")));
+        }
+        
+        String htmlTableFooter = "  </table>\r\n"
+                               + "</td>";
+        
+        
+        return String.format("%s%s%s", htmlTableHeader, tableContents.toString(), htmlTableFooter);
+    }  
 
 }

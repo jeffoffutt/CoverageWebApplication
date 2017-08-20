@@ -23,6 +23,7 @@ import com.drgarbage.visualgraphic.model.VertexBase;
 
 import coverage.web.controlflow.diagram.ClassFile;
 import coverage.web.controlflow.diagram.ControlFlowDiagramGraphFactory;
+import coverage.web.controlflow.diagram.WebControlFlowGraphDiagram;
 
 public class ControlFlowUtility
 {
@@ -46,7 +47,7 @@ public class ControlFlowUtility
                FilteringCodeVisitor   codeVisitor  = new FilteringCodeVisitor(methodName,  methodSig);     
                MethodFilteringVisitor classVisitor = new MethodFilteringVisitor(codeVisitor);
                ClassReader            classReader  = new ClassReader(fileInputStream, classVisitor);
-               
+              
                classReader.accept(classVisitor, 0);
                
                if (codeVisitor.getInstructions() == null) 
@@ -54,7 +55,7 @@ public class ControlFlowUtility
                    throw new ControlFlowGraphException("ControlFlowGraphGenerator: can't get method info of the " + methodName + methodSig);
     
                }
-    
+   
                return codeVisitor; 
            }                 
     }
@@ -67,9 +68,9 @@ public class ControlFlowUtility
      * @return Map where the key is the method name and descriptor (what gets displayed in the method drop down menu)
      * and the value is the ControlFlowGraphDiagram that the method is associated with
      */
-    public static Map<String, ControlFlowGraphDiagram> createControlFlowGraphMap(FileItem file, HttpServletRequest request)
+    public static Map<String, WebControlFlowGraphDiagram> createControlFlowGraphMap(FileItem file, HttpServletRequest request)
     {
-        Map<String, ControlFlowGraphDiagram> graphMap = new HashMap<String, ControlFlowGraphDiagram>();
+        Map<String, WebControlFlowGraphDiagram> graphMap = new HashMap<String, WebControlFlowGraphDiagram>();
         String contentType = request.getContentType();
         if(contentType == null || contentType.indexOf("multipart/form-data") == -1 || file.getSize() <= 0)
         {
@@ -84,7 +85,10 @@ public class ControlFlowUtility
                 String methodKey = String.format("Name: %s Descriptor: %s", method.getName(), method.getDescriptor());
                 
                 FilteringCodeVisitor methodInstructions = ControlFlowUtility.getInstructionList(file, method.getName(), method.getDescriptor());
-                graphMap.put(methodKey, ControlFlowDiagramGraphFactory.buildBasicblockGraphDiagram(methodInstructions.getInstructions()));
+                
+                graphMap.put(methodKey, new WebControlFlowGraphDiagram(ControlFlowDiagramGraphFactory.buildSourceControlFlowDiagram(methodInstructions.getInstructions(), methodInstructions.getLineNumberTable()), 
+                                                                       methodInstructions.getLineNumberTable(),
+                                                                       methodKey));
             }
         }
         catch (IOException e)
