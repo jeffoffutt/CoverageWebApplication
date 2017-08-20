@@ -236,6 +236,13 @@ public class GraphCoverage extends HttpServlet
                 }
                 else
                 {
+                    if(OtherTools.NewGraph.toString().equalsIgnoreCase(action))
+                    {
+                        graphMap.clear();
+                        selectedMethod = "";
+                        methodsList.clear();
+                    }
+                    
                     //Otherwise clear graph was called
                     webPage += clearGraph(selectedMethod);
                 }               
@@ -305,7 +312,7 @@ public class GraphCoverage extends HttpServlet
                 Graph bipartite = GraphUtil.getBipartiteGraph(prefix, initialNode, endNode);
                 paths = bipartite.findMinimumPrimePathCoverageViaPrefixGraph(graphToShow.findPrimePaths());
 
-                webPage += GraphCoverageUtility.printEdgeForm(new GraphCoverageInput(edges, initialNode, endNode, methodsList, selectedMethod, hiddenLink, showShareButton));
+                webPage += GraphCoverageUtility.printEdgeForm(new GraphCoverageInput(edges, initialNode, endNode, methodsList, selectedMethod, hiddenLink, showShareButton, graphMap.get(selectedMethod)));
                 webPage += printResult(printRequirements(paths, warning, title), graphMap.get(selectedMethod));
             } // end else if for test
               // for anything else, send it back to the page
@@ -369,7 +376,7 @@ public class GraphCoverage extends HttpServlet
         
         edges = edgesString;
         // show the webpage
-        return GraphCoverageUtility.printEdgeForm(new GraphCoverageInput(edges, initialNode, endNode, methodsList, selectedMethod, hiddenLink, showShareButton));
+        return GraphCoverageUtility.printEdgeForm(new GraphCoverageInput(edges, initialNode, endNode, methodsList, selectedMethod, hiddenLink, showShareButton, graphMap.get(selectedMethod)));
     }
     
     private void executeImportJavaFile(FileItem file, HttpServletRequest request)
@@ -443,12 +450,13 @@ public class GraphCoverage extends HttpServlet
         }
         paths.remove(0);
         result += GraphCoverageUtility.printEdgeForm(new GraphCoverageInput(edges,
-                                                       initialNode,
-                                                       endNode, 
-                                                       methodsList, 
-                                                       selectedMethod, 
-                                                       hiddenLink, 
-                                                       showShareButton));
+                                                                            initialNode,
+                                                                            endNode, 
+                                                                            methodsList, 
+                                                                            selectedMethod, 
+                                                                            hiddenLink, 
+                                                                            showShareButton,
+                                                                            graphMap.get(selectedMethod)));
         try
         {
             result += printResult(printPrimePathCoverage(paths, null, title), graphMap.get(selectedMethod));
@@ -484,7 +492,9 @@ public class GraphCoverage extends HttpServlet
                                                                                 methodsList, 
                                                                                 WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems), 
                                                                                 hiddenLink, 
-                                                                                showShareButton));
+                                                                                showShareButton,
+                                                                                graphMap.get(WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems))));
+            
             result += printResult(warning, graphMap.get(WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems)));
         }
         else
@@ -529,7 +539,8 @@ public class GraphCoverage extends HttpServlet
                                                                                        methodsList,
                                                                                        WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
                                                                                        hiddenLink, 
-                                                                                       showShareButton));
+                                                                                       showShareButton,
+                                                                                       graphMap.get(WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems))));
                                                                                     
                     result += printResult(printPrimePathCoverage(paths, null, title), graphMap.get(WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems)));
                 }
@@ -542,7 +553,9 @@ public class GraphCoverage extends HttpServlet
                                                                                         methodsList,
                                                                                         WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
                                                                                         hiddenLink, 
-                                                                                        showShareButton));
+                                                                                        showShareButton,
+                                                                                        graphMap.get(WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems))));
+                    
                     result += printResult(warning, graphMap.get(WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems)));
                 } // end catch
             }
@@ -563,7 +576,8 @@ public class GraphCoverage extends HttpServlet
                                                                                         methodsList,
                                                                                         WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
                                                                                         hiddenLink, 
-                                                                                        showShareButton));
+                                                                                        showShareButton,
+                                                                                        graphMap.get(WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems))));
                     
                     result += printResult(printPrimePathCoverage(paths, null, title), graphMap.get(WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems)));
                 }
@@ -576,7 +590,9 @@ public class GraphCoverage extends HttpServlet
                                                                                         methodsList,
                                                                                         WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
                                                                                         hiddenLink, 
-                                                                                        showShareButton));
+                                                                                        showShareButton,
+                                                                                        graphMap.get(WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems))));
+                    
                     result += printResult(warning, graphMap.get(WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems)));
                 } // end catch
             }
@@ -607,7 +623,9 @@ public class GraphCoverage extends HttpServlet
                                                                                 methodsList,
                                                                                 WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
                                                                                 hiddenLink, 
-                                                                                showShareButton));
+                                                                                showShareButton,
+                                                                                graphMap.get(WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems))));
+            
             result += printResult(warning, graphMap.get(WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems)));
         }
         else
@@ -628,7 +646,9 @@ public class GraphCoverage extends HttpServlet
                                                                                     methodsList,
                                                                                     WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
                                                                                     hiddenLink, 
-                                                                                    showShareButton));
+                                                                                    showShareButton,
+                                                                                    graphMap.get(WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems))));
+                
                 result += printResult(printEdgePairCoverage(paths, null, title), graphMap.get(WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems)));
             }
             catch(InvalidGraphException e)
@@ -640,7 +660,9 @@ public class GraphCoverage extends HttpServlet
                                                                                     methodsList,
                                                                                     WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
                                                                                     hiddenLink, 
-                                                                                    showShareButton));
+                                                                                    showShareButton,
+                                                                                    graphMap.get(WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems))));
+                
                 result += printResult(warning, graphMap.get(WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems)));
             }
         }
@@ -671,7 +693,8 @@ public class GraphCoverage extends HttpServlet
                                                                                 methodsList,
                                                                                 WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
                                                                                 hiddenLink, 
-                                                                                showShareButton));
+                                                                                showShareButton,
+                                                                                graphMap.get(WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems))));
             result += printResult(warning, graphMap.get(WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems)));
         }
         else
@@ -685,7 +708,8 @@ public class GraphCoverage extends HttpServlet
                                                                                     methodsList,
                                                                                     WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
                                                                                     hiddenLink, 
-                                                                                    showShareButton));
+                                                                                    showShareButton,
+                                                                                    graphMap.get(WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems))));
                 
                 result += printResult(printPaths(paths, null, title), graphMap.get(WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems)));
             }
@@ -698,7 +722,9 @@ public class GraphCoverage extends HttpServlet
                                                                                     methodsList,
                                                                                     WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
                                                                                     hiddenLink, 
-                                                                                    showShareButton));
+                                                                                    showShareButton,
+                                                                                    graphMap.get(WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems))));
+                
                 result += printResult(warning, graphMap.get(WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems)));
             }
         }
@@ -728,7 +754,8 @@ public class GraphCoverage extends HttpServlet
                                                                                 methodsList,
                                                                                 WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
                                                                                 hiddenLink, 
-                                                                                showShareButton));
+                                                                                showShareButton, 
+                                                                                graphMap.get(WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems))));
             
             result += printResult(warning, graphMap.get(WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems)));
         }
@@ -743,7 +770,8 @@ public class GraphCoverage extends HttpServlet
                                                                                     methodsList,
                                                                                     WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
                                                                                     hiddenLink, 
-                                                                                    showShareButton));
+                                                                                    showShareButton,
+                                                                                    graphMap.get(WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems))));
                 
                 result += printResult(printPaths(paths, null, title), graphMap.get(WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems)));
             }
@@ -756,7 +784,8 @@ public class GraphCoverage extends HttpServlet
                                                                                     methodsList,
                                                                                     WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
                                                                                     hiddenLink, 
-                                                                                    showShareButton));
+                                                                                    showShareButton,
+                                                                                    graphMap.get(WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems))));
                 
                 result += printResult(warning, graphMap.get(WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems)));
             }
@@ -787,7 +816,8 @@ public class GraphCoverage extends HttpServlet
                                                                                 methodsList,
                                                                                 WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
                                                                                 hiddenLink, 
-                                                                                showShareButton));
+                                                                                showShareButton,
+                                                                                graphMap.get(WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems))));
             
             result += printResult(warning, graphMap.get(WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems)));
 
@@ -802,7 +832,8 @@ public class GraphCoverage extends HttpServlet
                                                                                 methodsList,
                                                                                 WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
                                                                                 hiddenLink, 
-                                                                                showShareButton));
+                                                                                showShareButton,
+                                                                                graphMap.get(WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems))));
             if(infeasibleEdgePairs == null)                
                 infeasibleEdgePairs = "";
             
@@ -833,7 +864,8 @@ public class GraphCoverage extends HttpServlet
                                                                                 methodsList,
                                                                                 WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
                                                                                 hiddenLink, 
-                                                                                showShareButton));
+                                                                                showShareButton,
+                                                                                graphMap.get(WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems))));
             
             result += printResult(warning, graphMap.get(WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems)));
 
@@ -848,7 +880,8 @@ public class GraphCoverage extends HttpServlet
                                                                                 methodsList,
                                                                                 WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
                                                                                 hiddenLink, 
-                                                                                showShareButton));
+                                                                                showShareButton,
+                                                                                graphMap.get(WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems))));
             
             result += printResult(printRequirements(paths, warning, title), graphMap.get(WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems)));
         }
@@ -878,7 +911,8 @@ public class GraphCoverage extends HttpServlet
                                                                                 methodsList,
                                                                                 WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
                                                                                 hiddenLink, 
-                                                                                showShareButton));
+                                                                                showShareButton,
+                                                                                graphMap.get(WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems))));
             
             result += printResult(warning, graphMap.get(WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems)));
 
@@ -893,7 +927,8 @@ public class GraphCoverage extends HttpServlet
                                                                                 methodsList,
                                                                                 WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
                                                                                 hiddenLink, 
-                                                                                showShareButton));
+                                                                                showShareButton,
+                                                                                graphMap.get(WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems))));
             
             result += printResult(printRequirements(paths, warning, title), graphMap.get(WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems)));
         }
@@ -922,7 +957,8 @@ public class GraphCoverage extends HttpServlet
                                                                                 methodsList,
                                                                                 WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
                                                                                 hiddenLink, 
-                                                                                showShareButton));
+                                                                                showShareButton,
+                                                                                graphMap.get(WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems))));
             
             result += printResult(warning, graphMap.get(WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems)));
 
@@ -937,7 +973,8 @@ public class GraphCoverage extends HttpServlet
                                                                                 methodsList,
                                                                                 WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
                                                                                 hiddenLink, 
-                                                                                showShareButton));
+                                                                                showShareButton,
+                                                                                graphMap.get(WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems))));
             
             result += printResult(printRequirements(paths, warning, title), graphMap.get(WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems)));
         }
@@ -971,7 +1008,8 @@ public class GraphCoverage extends HttpServlet
                                                                             methodsList,
                                                                             WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
                                                                             hiddenLink, 
-                                                                            showShareButton));
+                                                                            showShareButton,
+                                                                            graphMap.get(WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems))));
         
         result += printResult(printPaths(paths, warning, title), graphMap.get(WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems)));   
         
@@ -999,7 +1037,8 @@ public class GraphCoverage extends HttpServlet
                                                                                 methodsList,
                                                                                 WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
                                                                                 hiddenLink, 
-                                                                                showShareButton));
+                                                                                showShareButton,
+                                                                                graphMap.get(WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems))));
             
             result += printResult(warning, graphMap.get(WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems)));
         }
@@ -1013,7 +1052,8 @@ public class GraphCoverage extends HttpServlet
                                                                                 methodsList,
                                                                                 WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
                                                                                 hiddenLink, 
-                                                                                showShareButton));
+                                                                                showShareButton,
+                                                                                graphMap.get(WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems))));
 
             if(infeasiblePrimePaths == null)
                 infeasiblePrimePaths = "";
@@ -1033,7 +1073,7 @@ public class GraphCoverage extends HttpServlet
         title = null;
         paths = null;
         infeasiblePrimePaths = "";
-        infeasibleEdgePairs = "";
+        infeasibleEdgePairs = "";  
         
         
         return GraphCoverageUtility.printEdgeForm(new GraphCoverageInput(edges,
@@ -1042,7 +1082,8 @@ public class GraphCoverage extends HttpServlet
                                                                          methodsList,
                                                                          selectedMethod,
                                                                          hiddenLink, 
-                                                                         showShareButton));
+                                                                         showShareButton,
+                                                                         graphMap.get(selectedMethod)));
     }
 
     private String executeAlgorithm2(String algorithm2Action, String action, Collection<WebItem> webItems) throws IOException
@@ -1069,7 +1110,8 @@ public class GraphCoverage extends HttpServlet
                                                                                     methodsList,
                                                                                     WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
                                                                                     hiddenLink, 
-                                                                                    showShareButton));
+                                                                                    showShareButton,
+                                                                                    graphMap.get(WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems))));
                 
                 result += printResult(warning, graphMap.get(WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems)));
             }
@@ -1136,7 +1178,8 @@ public class GraphCoverage extends HttpServlet
                                                                                     methodsList,
                                                                                     WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
                                                                                     hiddenLink, 
-                                                                                    showShareButton));
+                                                                                    showShareButton,
+                                                                                    graphMap.get(WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems))));
                 
                 result += printResult(printPaths(paths, null, title), graphMap.get(WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems)));
             }            
@@ -1162,7 +1205,8 @@ public class GraphCoverage extends HttpServlet
                                                                                     methodsList,
                                                                                     WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
                                                                                     hiddenLink, 
-                                                                                    showShareButton));
+                                                                                    showShareButton,
+                                                                                    graphMap.get(WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems))));
                 
                 result += printResult(warning, graphMap.get(WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems)));
             }
@@ -1235,7 +1279,8 @@ public class GraphCoverage extends HttpServlet
                                                                                         methodsList,
                                                                                         WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
                                                                                         hiddenLink, 
-                                                                                        showShareButton));
+                                                                                        showShareButton,
+                                                                                        graphMap.get(WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems))));
                     
                     result += printResult(printEdgePairCoverage(paths, null, title), graphMap.get(WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems)));
                 }
@@ -1248,7 +1293,8 @@ public class GraphCoverage extends HttpServlet
                                                                                         methodsList,
                                                                                         WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
                                                                                         hiddenLink, 
-                                                                                        showShareButton));
+                                                                                        showShareButton,
+                                                                                        graphMap.get(WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems))));
                     
                     result += printResult(warning, graphMap.get(WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems)));
                 }
@@ -1274,7 +1320,8 @@ public class GraphCoverage extends HttpServlet
                                                                                     methodsList,
                                                                                     WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
                                                                                     hiddenLink, 
-                                                                                    showShareButton));
+                                                                                    showShareButton,
+                                                                                    graphMap.get(WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems))));
                 
                 result += printResult(warning, graphMap.get(WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems)));
             }
@@ -1342,7 +1389,8 @@ public class GraphCoverage extends HttpServlet
                                                                                     methodsList,
                                                                                     WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
                                                                                     hiddenLink, 
-                                                                                    showShareButton));
+                                                                                    showShareButton,
+                                                                                    graphMap.get(WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems))));
                 try
                 {
                     result += printResult(printPrimePathCoverage(paths, null, title), graphMap.get(WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems)));
@@ -2276,11 +2324,7 @@ public class GraphCoverage extends HttpServlet
             result += "</div>\n" + "</td></tr>\n";
         }
 
-        result += "</table>\n";
-        if(diagram != null)
-        {
-            result += GraphCoverageUtility.buildRelationalTable(diagram);
-        }
+        result += "</table>\n";      
 
         return result;
     }

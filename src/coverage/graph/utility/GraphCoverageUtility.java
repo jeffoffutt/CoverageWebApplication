@@ -96,6 +96,38 @@ public class GraphCoverageUtility
         //no match was found
         return null;                                                 
     }
+    
+    public static String buildLineNumberTable(WebControlFlowGraphDiagram diagram)
+    {
+        if(diagram != null)
+        {
+            String htmlTableHeader = "&nbsp; <td width=\"400\" >\r\n"                       +  
+                                     "<table style=\"width:100%\" border=\"1\">\r\n" + 
+                                     "    <tr align=\"left\">\r\n"                   + 
+                                     "      <th>Node Identifier</th>\r\n"                 + 
+                                     "      <th>Description</th> \r\n"               + 
+                                     "    </tr>";
+            
+            StringBuilder tableContents = new StringBuilder();
+            for(VertexBase node : diagram.getDiagram().getChildren())
+            {           
+            tableContents.append(String.format("   <tr>\r\n"                  + 
+                                               "      <td>%d</td>\r\n"        + 
+                                               "      <td><p>%s</p></td>\r\n" + 
+                                               "    </tr>",
+                                               node.getId(),
+                                               node.getLabel().replace("\n", "<br />")));
+            }
+            
+            String htmlTableFooter = "  </table>\r\n" + 
+                                     "</td> &nbsp; ";
+            
+            
+            return String.format("%s%s%s", htmlTableHeader, tableContents.toString(), htmlTableFooter);
+        }
+        
+        return "";
+    }
 
     /***
      *  Effects: return a html page of Graph Coverage Computation Web Application
@@ -129,11 +161,11 @@ public class GraphCoverageUtility
                          + "<div style=\"text-align:center; font-weight:bold; font-size:125%\">Graph Information</div>\n"
                          // Import java file section
                          + "<div style=\"text-align:center;\" name = \"javaImportSection\">"
-                                 +"<td align=right width=\"15%\" >Upload Graph from Java file:</td>\n"
+                                 +"<td align=right width=\"15%\" >Upload Graph from Java .class file:</td>\n"
                                  //file input
                                  + "<input type=\"file\" value=\"Import Graph from Java .class File\" name=\"importJavaFileAction\" enc id=\"file\"/>"
                                  //Read file button
-                                 + "<input value=\"Read File\" type=\"submit\" name=\"importJavaFile\" id=\"upload\"  />"                                 
+                                 + " &nbsp; <input value=\"Read File\" type=\"submit\" name=\"importJavaFile\" id=\"upload\"  />"                                 
                                  //Method selector section
                                  +"<p " + GraphCoverageUtility.setVisibilityOfMethodDropDown(input.getMethods()) +"> "
                                          //Method drop down list
@@ -142,10 +174,11 @@ public class GraphCoverageUtility
                                             + GraphCoverageUtility.createMethodOptions(input.getMethods(), input.getSelectedMethod())                                             
                                           + "</select>"
                                           //Build Graph button
-                                          + "<input value=\"Build Graph\" type=\"submit\" name=\"" 
+                                          + "&nbsp;  <input value=\"Build Graph\" type=\"submit\" name=\"" 
                                                         + GraphInput.CreateGraphButton.getControlName() + "\" id=\"upload\"  />"
-                                + "</p>"
+                                + "</p>" 
                          + "</div>\n"
+                         + buildLineNumberTable(input.getDiagram())
                          + "<table id = \"tableForm\" border=\"1\" width=\"100%\" cellspacing=\"0\" cellpadding=\"0\"  bgcolor=\"#EEFFEE\">\n"
                          + "<tr>\n" + "  <td width=\"33%\">\n" + "    <table border=\"0\">\n" + "      <tr>\n" + "        <td>\n"
                          + "          Please enter your <font color=\"green\"><b>graph edges</b></font> in the text box below. \n"
@@ -298,7 +331,7 @@ public class GraphCoverageUtility
         
         StringBuilder tableContents = new StringBuilder();
         for(VertexBase node : diagram.getDiagram().getChildren())
-        {
+        {           
             tableContents.append(String.format("   <tr>\r\n" + 
                                                "      <td>%d</td>\r\n" + 
                                                "      <td><p>%s</p></td>\r\n" + 
