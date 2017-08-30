@@ -18,7 +18,6 @@ import com.drgarbage.asm.visitor.FilteringCodeVisitor;
 import com.drgarbage.asm.visitor.MethodFilteringVisitor;
 import com.drgarbage.controlflowgraph.ControlFlowGraphException;
 import com.drgarbage.visualgraphic.model.Connection;
-import com.drgarbage.visualgraphic.model.ControlFlowGraphDiagram;
 import com.drgarbage.visualgraphic.model.VertexBase;
 
 import coverage.web.controlflow.diagram.ClassFile;
