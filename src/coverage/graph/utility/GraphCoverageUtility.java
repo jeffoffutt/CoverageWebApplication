@@ -3,11 +3,8 @@ package coverage.graph.utility;
 import java.util.Collection;
 import java.util.List;
 
-import com.drgarbage.bytecode.LineNumberTableEntry;
-import com.drgarbage.visualgraphic.model.ControlFlowGraphDiagram;
 import com.drgarbage.visualgraphic.model.VertexBase;
 
-import coverage.graph.Edge;
 import coverage.graph.Node;
 import coverage.web.GraphCoverageInput;
 import coverage.web.WebCoverageUtility;
@@ -97,19 +94,35 @@ public class GraphCoverageUtility
         return null;                                                 
     }
     
-    public static String buildLineNumberTable(WebControlFlowGraphDiagram diagram)
+    /***
+     * Builds the line number table for the nodes generated from a java .class file. 
+     * It uses the diagram created.
+     * @param diagram the diagram to show the line numbers associated with the node identifiers
+     * @return the html table string with the line numbers and identifier relationships
+     */
+    private static String buildLineNumberTable(GraphCoverageInput input)
     {
-        if(diagram != null)
+        if(input.getDiagram() != null)
         {
-            String htmlTableHeader = "&nbsp; <td width=\"400\" >\r\n"                       +  
-                                     "<table style=\"width:100%\" border=\"1\">\r\n" + 
+           
+            String htmlTableHeader = "<a href=\"#demo\" class=\"accordion\" data-toggle=\"collapse\">Show Node Description</a>\r\n" + 
+                                     "  <div id=\"demo\" class=\"panel\">\r\n" +                                                                              
+                                     "<td width=\"50\" >\r\n"                       +  
+                                     "<table style=\"width:25%\" border=\"1\">\r\n" + 
                                      "    <tr align=\"left\">\r\n"                   + 
                                      "      <th>Node Identifier</th>\r\n"                 + 
                                      "      <th>Description</th> \r\n"               + 
                                      "    </tr>";
             
             StringBuilder tableContents = new StringBuilder();
-            for(VertexBase node : diagram.getDiagram().getChildren())
+            List<VertexBase> nodes = input.getDiagram().getDiagram().getChildren();
+            
+            if(nodes.size() > 0)
+            {
+                nodes.remove(nodes.size() - 1); //Remove the last node because it isn't a real node}
+            }
+            
+            for(VertexBase node : input.getDiagram().getDiagram().getChildren())
             {           
             tableContents.append(String.format("   <tr>\r\n"                  + 
                                                "      <td>%d</td>\r\n"        + 
@@ -120,13 +133,30 @@ public class GraphCoverageUtility
             }
             
             String htmlTableFooter = "  </table>\r\n" + 
-                                     "</td> &nbsp; ";
+                                     "</td> &nbsp; "
+                                     + "</div>"
+                                     + "<script>\r\n" + 
+                                     "var acc = document.getElementsByClassName(\"accordion\");\r\n" + 
+                                     "var i;\r\n" + 
+                                     "\r\n" + 
+                                     "for (i = 0; i < acc.length; i++) {\r\n" + 
+                                     "    acc[i].onclick = function(){\r\n" + 
+                                     "        this.classList.toggle(\"active\");\r\n" + 
+                                     "        var panel = this.nextElementSibling;\r\n" + 
+                                     "        if (panel.style.display === \"block\") {\r\n" + 
+                                     "            panel.style.display = \"none\";\r\n" + 
+                                     "        } else {\r\n" + 
+                                     "            panel.style.display = \"block\";\r\n" + 
+                                     "        }\r\n" + 
+                                     "    }\r\n" + 
+                                     "}\r\n" + 
+                                     "</script>";
             
             
             return String.format("%s%s%s", htmlTableHeader, tableContents.toString(), htmlTableFooter);
         }
         
-        return "";
+        return "\r\n";
     }
 
     /***
@@ -178,7 +208,7 @@ public class GraphCoverageUtility
                                                         + GraphInput.CreateGraphButton.getControlName() + "\" id=\"upload\"  />"
                                 + "</p>" 
                          + "</div>\n"
-                         + buildLineNumberTable(input.getDiagram())
+                         + buildLineNumberTable(input)
                          + "<table id = \"tableForm\" border=\"1\" width=\"100%\" cellspacing=\"0\" cellpadding=\"0\"  bgcolor=\"#EEFFEE\">\n"
                          + "<tr>\n" + "  <td width=\"33%\">\n" + "    <table border=\"0\">\n" + "      <tr>\n" + "        <td>\n"
                          + "          Please enter your <font color=\"green\"><b>graph edges</b></font> in the text box below. \n"
@@ -264,6 +294,20 @@ public class GraphCoverageUtility
     }
 
     
+    private static String getValueOfToggle(GraphCoverageInput input)
+    {
+        if(input.showNodeDescriptionDiagramTable())
+        {
+            return " checked=\"on\" ";
+        }
+        return " checked=\"off\" ";
+    }
+
+    private static String getLabelHiddenNodeDescriptionTable(GraphCoverageInput input)
+    {       
+        return input.getHideTableName();
+    }
+
     /***
      * Hides the methods dropdown if there are no methods to choose from
      * @param methods
@@ -308,7 +352,33 @@ public class GraphCoverageUtility
         return "<html>\n" + "<head>\n" + "<title>Graph Coverage</title>\n" + "</head>\n"
                 + "<body bgcolor=\"#DDEEDD\">\n"
                 + "<p style=\"text-align:center;font-size:150%;font-weight:bold\">Graph Coverage Web Application</p>\n"
-                +
+                +"<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\r\n" 
+                 //style for collapsable pane
+                +"<style> /* Style the buttons that are used to open and close the accordion panel */\r\n" + 
+                "button.accordion {\r\n" + 
+                "    background-color: #eee;\r\n" + 
+                "    color: #444;\r\n" + 
+                "    cursor: pointer;\r\n" + 
+                "    padding: 18px;\r\n" + 
+                "    width: 100%;\r\n" + 
+                "    text-align: left;\r\n" + 
+                "    border: none;\r\n" + 
+                "    outline: none;\r\n" + 
+                "    transition: 0.4s;\r\n" + 
+                "}\r\n" + 
+                "\r\n" + 
+                "/* Add a background color to the button if it is clicked on (add the .active class with JS), and when you move the mouse over it (hover) */\r\n" + 
+                "button.accordion.active, button.accordion:hover {\r\n" + 
+                "    background-color: #ddd;\r\n" + 
+                "}\r\n" + 
+                "\r\n" + 
+                "/* Style the btn-btn-info collapse. Note: hidden by default */\r\n" + 
+                "div.panel {\r\n" + 
+                "    padding: 0 18px;\r\n" + 
+                "    background-color:#DDEEDD;\r\n" + 
+                "    display: none;\r\n" + 
+                "}</style>"+
+             
                 // add js lib for graph display
                 "<script src=\"jquery-min.js\"></script>\n" + "<script src=\"springy.js\"></script>\n"
                 + "<script src=\"springyui.js\"></script>\n"
@@ -318,33 +388,6 @@ public class GraphCoverageUtility
                 // +"url = window.location.href;"
                 // +"text = url + text;"
                 + "window.prompt(\"Copy to clipboard: Ctrl+C\", text);" + "}" + "</script>";
-    }
-
-    public static String buildRelationalTable(WebControlFlowGraphDiagram diagram)
-    {
-        String htmlTableHeader = "<td width=\"400\" >\r\n"
-                                 +   "<table style=\"width:100%\" border=\"1\">\r\n" + 
-                                 "    <tr align=\"left\">\r\n" + 
-                                 "      <th>Identifier</th>\r\n" + 
-                                 "      <th>Description</th> \r\n" + 
-                                 "    </tr>";
-        
-        StringBuilder tableContents = new StringBuilder();
-        for(VertexBase node : diagram.getDiagram().getChildren())
-        {           
-            tableContents.append(String.format("   <tr>\r\n" + 
-                                               "      <td>%d</td>\r\n" + 
-                                               "      <td><p>%s</p></td>\r\n" + 
-                                               "    </tr>",
-                                               node.getId(),
-                                               node.getLabel().replace("\n", "<br />")));
-        }
-        
-        String htmlTableFooter = "  </table>\r\n"
-                               + "</td>";
-        
-        
-        return String.format("%s%s%s", htmlTableHeader, tableContents.toString(), htmlTableFooter);
     }  
 
 }
