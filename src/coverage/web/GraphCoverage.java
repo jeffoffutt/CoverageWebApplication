@@ -83,7 +83,6 @@ public class GraphCoverage extends HttpServlet
     // infeasible sub paths
     static String infeasibleSubpathsString;
     static List<Path> infeasibleSubpaths;
-    boolean isNodeDescriptionTableShowing = true;
 
     String[] infeasiblePrimePathsString;// store infeasible prime paths
     boolean[] infeasiblePrimePathsSigns;// represent if that prime path can be
@@ -213,7 +212,6 @@ public class GraphCoverage extends HttpServlet
         showShareButton = GraphCoverageUtility.setShowShareButtonVisibility(action, 
                                                                             WebCoverageUtility.GetWebValueItemOrNull(GraphInput.Algorithm2ActionButton.getControlName(), webItems),
                                                                             webItems);
-        updateIsNodeDescriptionTableShowing(webItems);
         
 
         //////////////////////////////////////////////////////////////
@@ -336,18 +334,6 @@ public class GraphCoverage extends HttpServlet
         out.println(webPage);
     }
     
-    private void updateIsNodeDescriptionTableShowing(Collection<WebItem> webItems)
-    {
-        WebItem  toggle = WebCoverageUtility.FindFirstWebItemByName(GraphInput.NodeDescriptionTableVisibilityToggleSwitch.getControlName(), webItems);
-        if(toggle != null)
-        {
-            if(toggle.getValue() != null)
-            {                
-                isNodeDescriptionTableShowing = toggle.getValue().toLowerCase().equals("on");
-            }
-        }        
-    }
-    
     private String getEdgeForm(Collection<WebItem> webItems)
     {
         return GraphCoverageUtility.printEdgeForm(new GraphCoverageInput(edges,
@@ -357,8 +343,7 @@ public class GraphCoverage extends HttpServlet
                                                                          WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems),
                                                                          hiddenLink, 
                                                                          showShareButton,
-                                                                         graphMap.get(WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems)),
-                                                                         isNodeDescriptionTableShowing));
+                                                                         graphMap.get(WebCoverageUtility.getGraphInputValue(GraphInput.SelectedMethodDropDown, webItems))));
     }
 
     private String createGraphFromFile(String selectedMethod)
@@ -413,8 +398,7 @@ public class GraphCoverage extends HttpServlet
                                                                          selectedMethod, 
                                                                          hiddenLink, 
                                                                          showShareButton, 
-                                                                         graphMap.get(selectedMethod),
-                                                                         isNodeDescriptionTableShowing));
+                                                                         graphMap.get(selectedMethod)));
     }
     
     private void executeImportJavaFile(FileItem file, HttpServletRequest request)
@@ -494,8 +478,7 @@ public class GraphCoverage extends HttpServlet
                                                                             selectedMethod, 
                                                                             hiddenLink, 
                                                                             showShareButton,
-                                                                            graphMap.get(selectedMethod),
-                                                                            isNodeDescriptionTableShowing));
+                                                                            graphMap.get(selectedMethod)));
         try
         {
             result += printResult(printPrimePathCoverage(paths, null, title), graphMap.get(selectedMethod));
@@ -947,8 +930,7 @@ public class GraphCoverage extends HttpServlet
                                                                          selectedMethod,
                                                                          hiddenLink, 
                                                                          showShareButton,
-                                                                         graphMap.get(selectedMethod),
-                                                                         isNodeDescriptionTableShowing));
+                                                                         graphMap.get(selectedMethod)));
     }
 
     private String executeAlgorithm2(String algorithm2Action, String action, Collection<WebItem> webItems) throws IOException

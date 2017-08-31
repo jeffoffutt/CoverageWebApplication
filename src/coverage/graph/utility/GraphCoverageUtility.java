@@ -189,6 +189,7 @@ public class GraphCoverageUtility
                             //Title
         String form = "" + "<form name = \"graphCoverageForm\" method=\"post\" action=\"GraphCoverage\"  enctype=\"multipart/form-data\" >\n"
                          + "<div style=\"text-align:center; font-weight:bold; font-size:125%\">Graph Information</div>\n"
+                         + "<div style=\"text-align:center; font-weight:bold; font-size:90%\">Option A (import From File):</div>\n"
                          // Import java file section
                          + "<div style=\"text-align:center;\" name = \"javaImportSection\">"
                                  +"<td align=right width=\"15%\" >Upload Graph from Java .class file:</td>\n"
@@ -209,6 +210,7 @@ public class GraphCoverageUtility
                                 + "</p>" 
                          + "</div>\n"
                          + buildLineNumberTable(input)
+                         + "<div style=\"text-align:center; font-weight:bold; font-size:90%\">Option B (enter by hand):</div>\n"
                          + "<table id = \"tableForm\" border=\"1\" width=\"100%\" cellspacing=\"0\" cellpadding=\"0\"  bgcolor=\"#EEFFEE\">\n"
                          + "<tr>\n" + "  <td width=\"33%\">\n" + "    <table border=\"0\">\n" + "      <tr>\n" + "        <td>\n"
                          + "          Please enter your <font color=\"green\"><b>graph edges</b></font> in the text box below. \n"
@@ -291,21 +293,6 @@ public class GraphCoverageUtility
         ;
     
         return form;
-    }
-
-    
-    private static String getValueOfToggle(GraphCoverageInput input)
-    {
-        if(input.showNodeDescriptionDiagramTable())
-        {
-            return " checked=\"on\" ";
-        }
-        return " checked=\"off\" ";
-    }
-
-    private static String getLabelHiddenNodeDescriptionTable(GraphCoverageInput input)
-    {       
-        return input.getHideTableName();
     }
 
     /***

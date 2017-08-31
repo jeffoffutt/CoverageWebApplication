@@ -15,7 +15,6 @@ public final class GraphCoverageInput
     private final String hiddenLink;
     private final boolean showShareButton;
     private final WebControlFlowGraphDiagram webControlFlowDiagram;
-    private final boolean showTableButton;
                                            
     public GraphCoverageInput(String                     edges, 
                               String                     initialNode, 
@@ -24,8 +23,7 @@ public final class GraphCoverageInput
                               String                     selectedMethod,
                               String                     hiddenLink,
                               boolean                    showShareButton,
-                              WebControlFlowGraphDiagram selectedDiagram,
-                              boolean                    showTableButton)
+                              WebControlFlowGraphDiagram selectedDiagram)
     {
         this.edges                 = edges;
         this.initialNode           = initialNode;
@@ -35,7 +33,6 @@ public final class GraphCoverageInput
         this.hiddenLink            = hiddenLink;
         this.showShareButton       = showShareButton;
         this.webControlFlowDiagram = selectedDiagram;
-        this.showTableButton       = showTableButton;
     }
     
     public List<String> getMethods()
@@ -76,20 +73,5 @@ public final class GraphCoverageInput
     public WebControlFlowGraphDiagram getDiagram()
     {
         return this.webControlFlowDiagram;
-    }
-
-    public String getHideTableName()
-    {
-       if(this.showTableButton)
-       {
-           return "Hide Node Table Description";
-       }
-       
-        return "Show Node Table Description";
-    }
-
-    public boolean showNodeDescriptionDiagramTable()
-    {
-        return this.showTableButton;
     }
 }

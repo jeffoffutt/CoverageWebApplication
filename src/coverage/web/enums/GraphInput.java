@@ -8,7 +8,6 @@ public enum GraphInput
     CreateGraphButton("createGraph"),
     SelectedMethodDropDown("selectedMethod"),
     InitialNodeTextBox("initialNode"),
-    NodeDescriptionTableVisibilityToggleSwitch("nodeDescriptionToggleSwitch"),
     Algorithm2ActionButton("algorithm2");
 
     
